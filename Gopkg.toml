@@ -1,0 +1,11 @@
+[prune]
+  go-tests = true
+  unused-packages = true
+
+[[override]]
+  name = "github.com/bazelbuild/bazel-gazelle"
+  revision = "6a1b93cc9b1c7e55e7d05a6d324bcf9d87ea3ab1"
+
+[[override]]
+  name = "github.com/bazelbuild/buildtools"
+  revision = "1a9c38e0df9397d033a1ca535596de5a7c1cf18f"

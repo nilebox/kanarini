@@ -1,0 +1,70 @@
+# Disable build files generation for these directories
+# gazelle:exclude vendor/github.com/bazelbuild/buildtools/buildifier2
+# gazelle:exclude vendor/golang.org/x/tools/cmd/fiximports/testdata
+# gazelle:exclude vendor/golang.org/x/tools/go/gcimporter15/testdata
+# gazelle:exclude vendor/golang.org/x/tools/go/internal/gccgoimporter/testdata
+# gazelle:exclude vendor/golang.org/x/tools/go/loader/testdata
+# gazelle:exclude vendor/golang.org/x/tools/go/internal/gcimporter/testdata
+# gazelle:proto disable_global
+
+load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
+load("@com_github_atlassian_bazel_tools//buildozer:def.bzl", "buildozer")
+load("@com_github_atlassian_bazel_tools//goimports:def.bzl", "goimports")
+load("@com_github_atlassian_bazel_tools//gometalinter:def.bzl", "gometalinter")
+
+gazelle(
+    name = "gazelle",
+    external = "vendored",
+    gazelle = "@bazel_gazelle//cmd/gazelle:gazelle_pure",
+    prefix = "github.com/nilebox/kanarini",
+)
+
+gazelle(
+    name = "gazelle_fix",
+    command = "fix",
+    external = "vendored",
+    gazelle = "@bazel_gazelle//cmd/gazelle:gazelle_pure",
+    prefix = "github.com/nilebox/kanarini",
+)
+
+buildifier(
+    name = "buildifier",
+    exclude_patterns = ["./vendor/*"],
+)
+
+buildifier(
+    name = "buildifier_check",
+    exclude_patterns = ["./vendor/*"],
+    mode = "check",
+)
+
+buildozer(
+    name = "buildozer",
+    commands = "//build:buildozer_commands.txt",
+)
+
+goimports(
+    name = "goimports",
+    display_diffs = True,
+    exclude_files = [
+        "zz_generated.*",
+    ],
+    exclude_paths = [
+        "./vendor/*",
+        "./pkg/client/clientset_generated/*",
+    ],
+    prefix = "github.com/nilebox/kanarini",
+    write = True,
+)
+
+gometalinter(
+    name = "gometalinter",
+    config = "//:.gometalinter.json",
+    paths = [
+        ".",
+        "cmd/...",
+        "pkg/...",
+    ],
+    prefix = "github.com/nilebox/kanarini",
+)

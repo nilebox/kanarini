@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["logz.go"],
+    importpath = "github.com/nilebox/kanarini/pkg/util/logz",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/go.uber.org/zap:go_default_library",
+        "//vendor/go.uber.org/zap/zapcore:go_default_library",
+    ],
+)

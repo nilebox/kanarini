@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "app_util.go",
+        "aux_server.go",
+    ],
+    importpath = "github.com/nilebox/kanarini/pkg/util/app",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-chi/chi:go_default_library",
+        "//vendor/github.com/go-chi/chi/middleware:go_default_library",
+        "//vendor/github.com/pkg/errors:go_default_library",
+        "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
+    ],
+)
