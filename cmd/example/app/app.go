@@ -4,6 +4,7 @@ import (
 
 	"context"
 	"flag"
+	"fmt"
 	"go.uber.org/zap"
 	"github.com/nilebox/kanarini/pkg/util/logz"
 	app_util "github.com/nilebox/kanarini/pkg/util/app"
@@ -13,7 +14,6 @@ import (
 	"net/http"
 	"sync"
 	"github.com/nilebox/kanarini/pkg/util/middleware"
-	"github.com/nilebox/kanarini/bazel-kanarini/external/go_sdk/src/fmt"
 )
 
 const (

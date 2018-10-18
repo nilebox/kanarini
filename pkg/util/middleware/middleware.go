@@ -1,9 +1,9 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
-	"github.com/nilebox/kanarini/bazel-kanarini/external/go_sdk/src/fmt"
 )
 
 var (

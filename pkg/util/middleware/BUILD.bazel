@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["middleware.go"],
+    importpath = "github.com/nilebox/kanarini/pkg/util/middleware",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/prometheus/client_golang/prometheus:go_default_library"],
+)
