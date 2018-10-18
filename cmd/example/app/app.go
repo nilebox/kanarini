@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"sync"
+	"github.com/nilebox/kanarini/pkg/util/middleware"
+	"github.com/nilebox/kanarini/bazel-kanarini/external/go_sdk/src/fmt"
 )
 
 const (
@@ -23,7 +25,7 @@ const (
 type App struct {
 	Logger             *zap.Logger
 	PrometheusRegistry metric_util.PrometheusRegistry
-	ReturnCode int
+	ResponseCode       int
 
 	// Address to listen on
 	// Defaults to port 8080
@@ -45,7 +47,7 @@ func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
 
 	flagset.StringVar(&a.ServerAddr,"addr", defaultServerAddr, "Port to listen on")
 	flagset.StringVar(&a.AuxServerAddr,"aux-addr", defaultAuxServerAddr, "Auxiliary port to listen on")
-	flagset.IntVar(&a.ReturnCode,"return-code", defaultReturnCode, "Return code for HTTP requests")
+	flagset.IntVar(&a.ResponseCode,"return-code", defaultReturnCode, "Return code for HTTP requests")
 	flagset.BoolVar(&a.Debug,"debug", false, "Enable debug mode")
 
 	err := flagset.Parse(arguments)
@@ -70,6 +72,9 @@ func (a *App) Run(ctx context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 		Handler:        router,
 	}
+	middleware.Register(a.PrometheusRegistry)
+	router.Use(middleware.MonitorRequest)
+	router.Handle("/", a.handler())
 
 	// Auxiliary server
 	auxServer := app_util.AuxServer{
@@ -101,4 +106,16 @@ func (a *App) Run(ctx context.Context) error {
 
 	wg.Wait()
 	return nil
+}
+
+func (a *App) handler() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(a.ResponseCode)
+		_, err := w.Write([]byte(fmt.Sprintf(`{ "responseCode": "%v" }`, a.ResponseCode)))
+		if err != nil {
+			a.Logger.Warn("failed to write response body")
+		}
+	}
+	return http.HandlerFunc(fn)
 }
