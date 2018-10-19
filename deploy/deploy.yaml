@@ -1,0 +1,125 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: example
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: example
+  namespace: example
+  labels:
+    app: example
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: example
+  template:
+    metadata:
+      labels:
+        app: example
+    spec:
+      containers:
+      - name: example
+        image: nilebox/kanarini-example:0.0.0-3fc5349
+        args:
+        - --return-code
+        - "200"
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: example
+  namespace: example
+  labels:
+    app: example
+spec:
+  selector:
+    app: example
+#  ports:
+#  - name: port-1
+#    nodePort: 30470
+#    port: 8080
+#    protocol: TCP
+#    targetPort: 8080
+#  - name: port-2
+#    nodePort: 30917
+#    port: 9090
+#    protocol: TCP
+#    targetPort: 9090
+#  sessionAffinity: None
+#  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+    name: http
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    name: metrics
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: example-public
+  namespace: example
+  labels:
+    app: example
+spec:
+  selector:
+    app: example
+  ports:
+  - name: port-1
+    nodePort: 30980
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: port-2
+    nodePort: 30990
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  sessionAffinity: None
+  type: NodePort
+---
+#apiVersion: extensions/v1beta1
+#kind: Ingress
+#metadata:
+#  name: example
+#  namespace: example
+#spec:
+#  rules:
+#  - http:
+#      paths:
+#      - path: /test
+#        backend:
+#          serviceName: example
+#          servicePort: 80
+#      - path: /metrics
+#        backend:
+#          serviceName: example
+#          servicePort: 9090

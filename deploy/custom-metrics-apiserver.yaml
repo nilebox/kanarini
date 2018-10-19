@@ -1,0 +1,61 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: custom-metrics-apiserver
+  name: custom-metrics-apiserver
+  namespace: monitoring
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: custom-metrics-apiserver
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: custom-metrics-apiserver
+      name: custom-metrics-apiserver
+    spec:
+      containers:
+      - args:
+        - /adapter
+        - --secure-port=6443
+        - --tls-cert-file=/var/run/serving-cert/serving.crt
+        - --tls-private-key-file=/var/run/serving-cert/serving.key
+        - --logtostderr=true
+        - --prometheus-url=http://prometheus-operated.example.svc:9090/
+        - --metrics-relist-interval=30s
+        - --rate-interval=5m
+        - --v=6
+        image: quay.io/coreos/k8s-prometheus-adapter-amd64:v0.2.0
+        imagePullPolicy: IfNotPresent
+        name: custom-metrics-apiserver
+        ports:
+        - containerPort: 6443
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/serving-cert
+          name: volume-serving-cert
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccountName: custom-metrics-apiserver
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: volume-serving-cert
+        secret:
+          defaultMode: 420
+          secretName: cm-adapter-serving-certs
