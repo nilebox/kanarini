@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 )
@@ -10,27 +9,32 @@ var (
 	requestCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "request_count",
-			Help: "Counter of requests with HTTP code.",
+			Help: "Counter of requests with result.",
 		},
-		[]string{"code", "result"},
+		[]string{"result"},
+	)
+	totalRequestCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "request_count_total",
+			Help: "Counter of total requests",
+		},
+		[]string{},
 	)
 )
 
 func Register(registerer prometheus.Registerer) {
 	registerer.MustRegister(requestCounter)
+	registerer.MustRegister(totalRequestCounter)
 }
 
 func MonitorRequest(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		delegate := &ResponseWriterDelegator{ResponseWriter: w}
 		next.ServeHTTP(delegate, r)
-		requestCounter.WithLabelValues(codeToString(delegate), codeToResult(delegate)).Inc()
+		requestCounter.WithLabelValues(codeToResult(delegate)).Inc()
+		totalRequestCounter.WithLabelValues().Inc()
 	}
 	return http.HandlerFunc(fn)
-}
-
-func codeToString(r *ResponseWriterDelegator) string {
-	return fmt.Sprintf("%v", r.status)
 }
 
 func codeToResult(r *ResponseWriterDelegator) string {

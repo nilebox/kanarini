@@ -66,14 +66,8 @@ spec:
   - name: example-rules
     rules:
     - expr: |
-        request_count{result="success"}
-      record: request_count:success
-    - expr: |
-        request_count{result="failure"}
-      record: request_count:failure
-    - expr: |
-        sum(request_count:failure) without (code, result) / sum(request_count) without (code, result)
-      record: request_count:error_rate
+        rate(request_count{result="failure"}[5m]) / ignoring(result) rate(request_count_total[5m])
+      record: request_count:failure:rate5m
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
