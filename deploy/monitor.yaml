@@ -47,9 +47,33 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       app: example
+  ruleSelector:
+    matchLabels:
+      prometheus: prometheus-example
   resources:
     requests:
       memory: 400Mi
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: prometheus-example-rules
+  namespace: example
+  labels:
+    prometheus: prometheus-example
+spec:
+  groups:
+  - name: example-rules
+    rules:
+    - expr: |
+        request_count{result="success"}
+      record: request_count:success
+    - expr: |
+        request_count{result="failure"}
+      record: request_count:failure
+    - expr: |
+        sum(request_count:failure) without (code, result) / sum(request_count) without (code, result)
+      record: request_count:error_rate
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

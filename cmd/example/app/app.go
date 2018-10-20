@@ -14,18 +14,19 @@ import (
 	"net/http"
 	"sync"
 	"github.com/nilebox/kanarini/pkg/util/middleware"
+	"math/rand"
 )
 
 const (
-	defaultReturnCode = 200
-	defaultServerAddr = ":8080"
+	defaultErrorRate     = 0.5
+	defaultServerAddr    = ":8080"
 	defaultAuxServerAddr = ":9090"
 )
 
 type App struct {
 	Logger             *zap.Logger
 	PrometheusRegistry metric_util.PrometheusRegistry
-	ResponseCode       int
+	ErrorRate          float64
 
 	// Address to listen on
 	// Defaults to port 8080
@@ -47,7 +48,7 @@ func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
 
 	flagset.StringVar(&a.ServerAddr,"addr", defaultServerAddr, "Port to listen on")
 	flagset.StringVar(&a.AuxServerAddr,"aux-addr", defaultAuxServerAddr, "Auxiliary port to listen on")
-	flagset.IntVar(&a.ResponseCode,"return-code", defaultReturnCode, "Return code for HTTP requests")
+	flagset.Float64Var(&a.ErrorRate,"error-rate", defaultErrorRate, "Error rate for HTTP requests")
 	flagset.BoolVar(&a.Debug,"debug", false, "Enable debug mode")
 
 	err := flagset.Parse(arguments)
@@ -111,11 +112,22 @@ func (a *App) Run(ctx context.Context) error {
 func (a *App) handler() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(a.ResponseCode)
-		_, err := w.Write([]byte(fmt.Sprintf(`{ "responseCode": "%v" }`, a.ResponseCode)))
+		status := a.generateResponseCode()
+		w.WriteHeader(status)
+		_, err := w.Write([]byte(fmt.Sprintf(`{ "responseCode": "%v" }`, status)))
 		if err != nil {
 			a.Logger.Warn("failed to write response body")
 		}
 	}
 	return http.HandlerFunc(fn)
+}
+
+func (a *App) generateResponseCode() int {
+	num := float64(rand.Intn(101))
+	target := a.ErrorRate * 100
+	if num > target {
+		return http.StatusOK
+	} else {
+		return http.StatusInternalServerError
+	}
 }
