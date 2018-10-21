@@ -21,6 +21,7 @@ var (
 	CanaryDeploymentGVK = SchemeGroupVersion.WithKind(CanaryDeploymentResourceKind)
 )
 
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type CanaryDeploymentList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -28,6 +29,8 @@ type CanaryDeploymentList struct {
 	Items           []CanaryDeployment `json:"items"`
 }
 
+// +genclient
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type CanaryDeployment struct {
 	metav1.TypeMeta   `json:",inline"`

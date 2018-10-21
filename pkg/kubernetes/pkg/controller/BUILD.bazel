@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["controller_utils.go"],
+    importpath = "github.com/nilebox/kanarini/pkg/kubernetes/pkg/controller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/kubernetes/pkg/util/hash:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/util/rand:go_default_library",
+    ],
+)

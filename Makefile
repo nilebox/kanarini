@@ -1,4 +1,5 @@
 OS = $$(uname -s | tr A-Z a-z)
+BINARY_PREFIX_DIRECTORY=$(OS)_amd64_stripped
 
 .PHONY: setup
 setup:
@@ -32,6 +33,30 @@ verify:
 .PHONY: lint
 lint:
 	bazel run //:gometalinter
+
+.PHONY: generate
+generate: generate-client generate-deepcopy
+
+.PHONY: generate-client
+generate-client:
+	bazel build //vendor/k8s.io/code-generator/cmd/client-gen
+	# Generate the versioned clientset (pkg/client/clientset_generated/clientset)
+	bazel-bin/vendor/k8s.io/code-generator/cmd/client-gen/$(BINARY_PREFIX_DIRECTORY)/client-gen $(VERIFY_CODE) \
+	--input-base "github.com/nilebox/kanarini/pkg/apis/" \
+	--input "kanarini/v1alpha1" \
+	--clientset-path "github.com/nilebox/kanarini/pkg/client/clientset_generated/" \
+	--clientset-name "clientset" \
+	--go-header-file "build/code-generator/boilerplate.go.txt"
+
+.PHONY: generate-deepcopy
+generate-deepcopy:
+	bazel build //vendor/k8s.io/code-generator/cmd/deepcopy-gen
+	# Generate deep copies
+	bazel-bin/vendor/k8s.io/code-generator/cmd/deepcopy-gen/$(BINARY_PREFIX_DIRECTORY)/deepcopy-gen $(VERIFY_CODE) \
+	--go-header-file "build/code-generator/boilerplate.go.txt" \
+	--input-dirs "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1" \
+	--bounding-dirs "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1" \
+	--output-file-base zz_generated.deepcopy
 
 .PHONY: docker-kanarini
 docker-kanarini:
