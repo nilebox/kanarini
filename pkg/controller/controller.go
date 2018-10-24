@@ -1,33 +1,34 @@
 package controller
 
 import (
-	apps "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"fmt"
+	"time"
+
+	"github.com/golang/glog"
 	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
 	kanariniclientset "github.com/nilebox/kanarini/pkg/client/clientset_generated/clientset/typed/kanarini/v1alpha1"
 	informers "github.com/nilebox/kanarini/pkg/client/informers_generated/externalversions/kanarini/v1alpha1"
 	listers "github.com/nilebox/kanarini/pkg/client/listers_generated/kanarini/v1alpha1"
-	appslisters "k8s.io/client-go/listers/apps/v1"
-	corelisters "k8s.io/client-go/listers/core/v1"
+	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/controller"
+	apps "k8s.io/api/apps/v1"
+	"k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/workqueue"
-	"github.com/golang/glog"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"time"
-	"k8s.io/kubernetes/pkg/util/metrics"
-	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
 	coreinformers "k8s.io/client-go/informers/core/v1"
-	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/controller"
-	"fmt"
+	"k8s.io/client-go/kubernetes"
+	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
+	appslisters "k8s.io/client-go/listers/apps/v1"
+	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/workqueue"
+	"k8s.io/kubernetes/pkg/util/metrics"
 )
 
 const (
@@ -45,8 +46,8 @@ var canaryDeploymentKind = kanarini.CanaryDeploymentGVK
 // CanaryDeploymentController is responsible for synchronizing CanaryDeployment objects stored
 // in the system with actual running deployments and services.
 type CanaryDeploymentController struct {
-	kubeClient             kubernetes.Interface
-	kanariniClient         kanariniclientset.KanariniV1alpha1Interface
+	kubeClient     kubernetes.Interface
+	kanariniClient kanariniclientset.KanariniV1alpha1Interface
 
 	// To allow injection of syncDeployment for testing.
 	syncHandler func(dKey string) error
@@ -78,7 +79,7 @@ type CanaryDeploymentController struct {
 // NewController returns a new CanaryDeployment canaryDeploymentController.
 func NewController(
 	kubeClient kubernetes.Interface,
-	kanariniClient         kanariniclientset.KanariniV1alpha1Interface,
+	kanariniClient kanariniclientset.KanariniV1alpha1Interface,
 	cdInformer informers.CanaryDeploymentInformer,
 	dInformer appsinformers.DeploymentInformer,
 	sInformer coreinformers.ServiceInformer,

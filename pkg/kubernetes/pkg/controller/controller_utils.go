@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"hash/fnv"
 
+	"github.com/golang/glog"
 	hashutil "github.com/nilebox/kanarini/pkg/kubernetes/pkg/util/hash"
 	"k8s.io/apimachinery/pkg/util/rand"
-	"k8s.io/client-go/tools/cache"
-	"github.com/golang/glog"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/tools/cache"
 )
 
 var (
