@@ -13,8 +13,3 @@ spec:
     shortNames: ["cd", "canary"]
   scope: Namespaced
   version: v1alpha1
----
-apiVersion: "kanarini.nilebox.github.com/v1alpha1"
-kind: "CanaryDeployment"
-metadata:
-  name: "example"

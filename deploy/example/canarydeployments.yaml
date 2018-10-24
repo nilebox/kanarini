@@ -1,0 +1,5 @@
+---
+apiVersion: "kanarini.nilebox.github.com/v1alpha1"
+kind: "CanaryDeployment"
+metadata:
+  name: "example"
