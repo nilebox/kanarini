@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (

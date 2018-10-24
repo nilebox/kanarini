@@ -35,7 +35,7 @@ lint:
 	bazel run //:gometalinter
 
 .PHONY: generate
-generate: generate-client generate-deepcopy
+generate: generate-client generate-deepcopy generate-lister generate-informer
 
 .PHONY: generate-client
 generate-client:
@@ -47,6 +47,26 @@ generate-client:
 	--clientset-path "github.com/nilebox/kanarini/pkg/client/clientset_generated/" \
 	--clientset-name "clientset" \
 	--go-header-file "build/code-generator/boilerplate.go.txt"
+
+.PHONY: generate-lister
+generate-lister:
+	bazel build //vendor/k8s.io/code-generator/cmd/lister-gen
+	# Generate listers (pkg/client/listers_generated/clientset)
+	bazel-bin/vendor/k8s.io/code-generator/cmd/lister-gen/$(BINARY_PREFIX_DIRECTORY)/lister-gen $(VERIFY_CODE) \
+	--input-dirs "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1" \
+	--output-package "github.com/nilebox/kanarini/pkg/client/listers_generated" \
+	--go-header-file "build/code-generator/boilerplate.go.txt"
+
+.PHONY: generate-informer
+generate-informer:
+	bazel build //vendor/k8s.io/code-generator/cmd/informer-gen
+	# Generate informers (pkg/client/informers_generated/clientset)
+	bazel-bin/vendor/k8s.io/code-generator/cmd/informer-gen/$(BINARY_PREFIX_DIRECTORY)/informer-gen $(VERIFY_CODE) \
+	--input-dirs "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1" \
+	--versioned-clientset-package "github.com/nilebox/kanarini/pkg/client/clientset_generated/clientset" \
+	--listers-package "github.com/nilebox/kanarini/pkg/client/listers_generated" \
+    --output-package "github.com/nilebox/kanarini/pkg/client/informers_generated" \
+    --go-header-file "build/code-generator/boilerplate.go.txt"
 
 .PHONY: generate-deepcopy
 generate-deepcopy:

@@ -1,6 +1,6 @@
 package kanarini
 
 const (
-	Domain = "nilebox.github.com"
+	Domain    = "nilebox.github.com"
 	GroupName = "kanarini." + Domain
 )

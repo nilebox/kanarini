@@ -4,9 +4,32 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash/fnv"
-	"k8s.io/apimachinery/pkg/util/rand"
+
 	hashutil "github.com/nilebox/kanarini/pkg/kubernetes/pkg/util/hash"
+	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/tools/cache"
+	"github.com/golang/glog"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 )
+
+var (
+	KeyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
+)
+
+// WaitForCacheSync is a wrapper around cache.WaitForCacheSync that generates log messages
+// indicating that the controller identified by controllerName is waiting for syncs, followed by
+// either a successful or failed sync.
+func WaitForCacheSync(controllerName string, stopCh <-chan struct{}, cacheSyncs ...cache.InformerSynced) bool {
+	glog.Infof("Waiting for caches to sync for %s controller", controllerName)
+
+	if !cache.WaitForCacheSync(stopCh, cacheSyncs...) {
+		utilruntime.HandleError(fmt.Errorf("Unable to sync caches for %s controller", controllerName))
+		return false
+	}
+
+	glog.Infof("Caches are synced for %s controller", controllerName)
+	return true
+}
 
 // ComputeHash returns a hash value calculated from pod template and
 // a collisionCount to avoid hash collision. The hash will be safe encoded to

@@ -2,12 +2,12 @@ package app
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
-	"net/http"
-	"time"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
 )

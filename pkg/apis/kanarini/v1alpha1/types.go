@@ -1,10 +1,10 @@
 package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"github.com/nilebox/kanarini/pkg/apis/kanarini"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -40,7 +40,7 @@ type CanaryDeployment struct {
 }
 
 const (
-	PodTemplateHashLabelKey string = "pod-template-hash"
+	PodTemplateHashLabelKey     string = "pod-template-hash"
 	ServiceTemplateHashLabelKey string = "service-template-hash"
 )
 
@@ -51,9 +51,9 @@ type CanaryDeploymentSpec struct {
 	// It must match the pod template's labels.
 	Selector *metav1.LabelSelector `json:"selector" protobuf:"bytes,2,opt,name=selector"`
 
-	PodTemplate corev1.PodTemplateSpec `json:"podTemplate"`
-	ServiceTemplate ServiceTemplateSpec `json:"serviceTemplate"`
-	Tracks CanaryDeploymentTracks `json:"tracks"`
+	PodTemplate     corev1.PodTemplateSpec `json:"podTemplate"`
+	ServiceTemplate ServiceTemplateSpec    `json:"serviceTemplate"`
+	Tracks          CanaryDeploymentTracks `json:"tracks"`
 
 	// Minimum number of seconds for which a newly created pod should be ready
 	// without any of its container crashing, for it to be considered available.

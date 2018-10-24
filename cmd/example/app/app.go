@@ -1,20 +1,20 @@
 package app
 
 import (
-
 	"context"
 	"flag"
 	"fmt"
-	"go.uber.org/zap"
-	"github.com/nilebox/kanarini/pkg/util/logz"
-	app_util "github.com/nilebox/kanarini/pkg/util/app"
-	metric_util "github.com/nilebox/kanarini/pkg/util/metric"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/go-chi/chi"
+	"math/rand"
 	"net/http"
 	"sync"
+
+	"github.com/go-chi/chi"
+	app_util "github.com/nilebox/kanarini/pkg/util/app"
+	"github.com/nilebox/kanarini/pkg/util/logz"
+	metric_util "github.com/nilebox/kanarini/pkg/util/metric"
 	"github.com/nilebox/kanarini/pkg/util/middleware"
-	"math/rand"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 )
 
 const (
@@ -40,16 +40,15 @@ type App struct {
 }
 
 func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
-	a := App{
-	}
+	a := App{}
 
 	logEncoding := flagset.String("log-encoding", "json", `Sets the logger's encoding. Valid values are "json" and "console".`)
 	loggingLevel := flagset.String("log-level", "info", `Sets the logger's output level.`)
 
-	flagset.StringVar(&a.ServerAddr,"addr", defaultServerAddr, "Port to listen on")
-	flagset.StringVar(&a.AuxServerAddr,"aux-addr", defaultAuxServerAddr, "Auxiliary port to listen on")
-	flagset.Float64Var(&a.ErrorRate,"error-rate", defaultErrorRate, "Error rate for HTTP requests")
-	flagset.BoolVar(&a.Debug,"debug", false, "Enable debug mode")
+	flagset.StringVar(&a.ServerAddr, "addr", defaultServerAddr, "Port to listen on")
+	flagset.StringVar(&a.AuxServerAddr, "aux-addr", defaultAuxServerAddr, "Auxiliary port to listen on")
+	flagset.Float64Var(&a.ErrorRate, "error-rate", defaultErrorRate, "Error rate for HTTP requests")
+	flagset.BoolVar(&a.Debug, "debug", false, "Enable debug mode")
 
 	err := flagset.Parse(arguments)
 	if err != nil {

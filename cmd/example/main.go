@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
-	"flag"
 
-	app_util "github.com/nilebox/kanarini/pkg/util/app"
 	"github.com/nilebox/kanarini/cmd/example/app"
+	app_util "github.com/nilebox/kanarini/pkg/util/app"
 )
 
 func main() {
