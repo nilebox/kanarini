@@ -10,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/golang/glog"
 )
 
 // rolloutRolling implements the logic for rolling a new replica set.
@@ -24,6 +25,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		// TODO exponential delay + watch on deployment objects
 		return errors.New("Canary track deployment is not ready")
 	}
+	glog.V(4).Info("Canary track deployment is ready!")
 	// Create a canary Service
 	// TODO
 	// Wait for metric delay to expire
@@ -31,13 +33,14 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Check the metric value and decide whether Service is healthy
 	// TODO
 	// Create a stable track deployment
-	stableTrackDeployment, err := c.createTrackDeployment(cd, dList, &cd.Spec.Tracks.Stable, kanarini.CanaryTrackName)
+	stableTrackDeployment, err := c.createTrackDeployment(cd, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
 	// Wait for a canary track deployment to succeed
 	// Wait for a canary track deployment to succeed
 	if !IsReady(stableTrackDeployment) {
 		// TODO exponential delay + watch on deployment objects
-		return errors.New("Canary track deployment is not ready")
+		return errors.New("Stable track deployment is not ready")
 	}
+	glog.V(4).Info("Stable track deployment is ready!")
 	// Create a stable Service
 	// TODO
 	// Done

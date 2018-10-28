@@ -40,8 +40,8 @@ type CanaryDeployment struct {
 }
 
 const (
-	PodTemplateHashLabelKey     string = "pod-template-hash"
-	ServiceTemplateHashLabelKey string = "service-template-hash"
+	PodTemplateHashLabelKey     string = kanarini.GroupName + "/pod-template-hash"
+	ServiceTemplateHashLabelKey string = kanarini.GroupName + "/service-template-hash"
 )
 
 type CanaryDeploymentSpec struct {

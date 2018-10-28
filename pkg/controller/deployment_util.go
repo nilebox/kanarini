@@ -13,18 +13,22 @@ func IsReady(deployment *apps.Deployment) bool {
 	}
 
 	availableCondition := GetDeploymentCondition(status, apps.DeploymentAvailable)
-	progressingCondition := GetDeploymentCondition(status, apps.DeploymentProgressing)
 	failureCondition := GetDeploymentCondition(status, apps.DeploymentReplicaFailure)
-
-	if progressingCondition != nil && progressingCondition.Status != corev1.ConditionFalse {
-		return false
-	}
 
 	if failureCondition != nil && failureCondition.Status != corev1.ConditionFalse {
 		return false
 	}
 
-	if availableCondition == nil || failureCondition.Status != corev1.ConditionTrue {
+	if availableCondition == nil || availableCondition.Status != corev1.ConditionTrue {
+		return false
+	}
+
+	var desiredReplicas int32 = 1
+	if deployment.Spec.Replicas != nil {
+		desiredReplicas = *deployment.Spec.Replicas
+	}
+	// TODO also check updatedReplicas?
+	if status.ReadyReplicas != desiredReplicas {
 		return false
 	}
 
