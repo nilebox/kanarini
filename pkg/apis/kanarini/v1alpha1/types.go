@@ -234,3 +234,10 @@ type MetricIdentifier struct {
 	// +optional
 	Selector *metav1.LabelSelector `json:"selector,omitempty" protobuf:"bytes,2,name=selector"`
 }
+
+type CanaryDeploymentTrackName string
+
+const (
+	CanaryTrackName CanaryDeploymentTrackName = "canary"
+	StableTrackName CanaryDeploymentTrackName = "stable"
+)

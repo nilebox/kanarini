@@ -290,8 +290,7 @@ func (c *CanaryDeploymentController) syncDeployment(key string) error {
 		return c.syncStatusOnly(cd, dList, sList)
 	}
 
-	// TODO
-	return fmt.Errorf("Not implemented")
+	return c.rolloutCanary(cd, dList, sList)
 }
 
 // getDeploymentsForCanaryDeployment returns the list of Deployments that this CanaryDeployment should manage.

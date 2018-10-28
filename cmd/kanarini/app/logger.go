@@ -15,7 +15,7 @@ type LoggerOptions struct {
 
 func BindLoggerFlags(o *LoggerOptions, fs *flag.FlagSet) {
 	fs.StringVar(&o.LogLevel, "log-level", "info", `Sets the logger's output level.`)
-	fs.StringVar(&o.LogEncoding, "log-encoding", "json", `Sets the logger's encoding. Valid values are "json" and "console".`)
+	fs.StringVar(&o.LogEncoding, "log-encoding", "console", `Sets the logger's encoding. Valid values are "json" and "console".`)
 }
 
 func Logger(level zapcore.Level, encoder func(zapcore.EncoderConfig) zapcore.Encoder) *zap.Logger {

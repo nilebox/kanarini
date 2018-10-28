@@ -1,5 +1,42 @@
 ---
-apiVersion: "kanarini.nilebox.github.com/v1alpha1"
-kind: "CanaryDeployment"
+apiVersion: kanarini.nilebox.github.com/v1alpha1
+kind: CanaryDeployment
 metadata:
-  name: "example"
+  name: example
+  namespace: example
+spec:
+  podTemplate:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.15.4
+        ports:
+        - containerPort: 80
+  serviceTemplate:
+    selector:
+      app: nginx
+    ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+  tracks:
+    canary:
+      replicas: 1
+      serviceName: example-canary
+      metrics:
+      - type: object
+        object:
+          describedObject:
+            kind: "Service"
+            name: "example-canary"
+            metric:
+              name: "somemetric"
+            target:
+              type: value
+              value: 300
+    stable:
+      replicas: 5
+      serviceName: example-stable

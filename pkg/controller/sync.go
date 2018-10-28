@@ -11,5 +11,5 @@ import (
 // syncStatusOnly only updates Deployments Status and doesn't take any mutating actions.
 func (c *CanaryDeploymentController) syncStatusOnly(cd *kanarini.CanaryDeployment, dList []*apps.Deployment, sList []*corev1.Service) error {
 	// TODO
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("syncStatusOnly is not implemented")
 }
