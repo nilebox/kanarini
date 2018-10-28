@@ -2,8 +2,7 @@ package app
 
 import (
 	"time"
-
-	"github.com/atlassian/ctrl"
+	"flag"
 )
 
 const (
@@ -15,7 +14,7 @@ type GenericControllerOptions struct {
 	Workers      int
 }
 
-func BindGenericControllerFlags(o *GenericControllerOptions, fs ctrl.FlagSet) {
+func BindGenericControllerFlags(o *GenericControllerOptions, fs *flag.FlagSet) {
 	fs.DurationVar(&o.ResyncPeriod, "resync-period", defaultResyncPeriod, "Resync period for informers")
 	fs.IntVar(&o.Workers, "workers", 2, "Number of workers that handle events from informers")
 }

@@ -4,15 +4,14 @@ import (
 	"context"
 	"os"
 	"time"
-
-	"github.com/atlassian/ctrl"
-	"github.com/atlassian/ctrl/logz"
 	"go.uber.org/zap"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	core_v1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
+	"flag"
+	"github.com/nilebox/kanarini/pkg/util/logz"
 )
 
 const (
@@ -84,7 +83,7 @@ func DoLeaderElection(ctx context.Context, logger *zap.Logger, component string,
 	}
 }
 
-func BindLeaderElectionFlags(component string, o *LeaderElectionOptions, fs ctrl.FlagSet) {
+func BindLeaderElectionFlags(component string, o *LeaderElectionOptions, fs *flag.FlagSet) {
 	// This flag is off by default only because leader election package says it is ALPHA API.
 	fs.BoolVar(&o.LeaderElect, "leader-elect", false, ""+
 		"Start a leader election client and gain leadership before "+

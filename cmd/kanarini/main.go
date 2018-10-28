@@ -30,5 +30,8 @@ func runWithContext(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return a.Run(ctx)
+	a.Logger.Info("Application starting")
+	err = a.Run(ctx)
+	a.Logger.Info("Application quit")
+	return err
 }

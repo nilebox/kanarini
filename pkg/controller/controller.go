@@ -138,8 +138,8 @@ func (c *CanaryDeploymentController) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	defer c.queue.ShutDown()
 
-	glog.Infof("Starting deployment controller")
-	defer glog.Infof("Shutting down deployment controller")
+	glog.Info("Starting deployment controller")
+	defer glog.Info("Shutting down deployment controller")
 
 	if !controller.WaitForCacheSync("canary-deployment", stopCh, c.cdListerSynced, c.dListerSynced, c.sListerSynced) {
 		return

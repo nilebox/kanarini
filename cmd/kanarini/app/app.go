@@ -89,6 +89,9 @@ func (a *App) Run(ctx context.Context) error {
 	serviceInf := coreSharedInformers.Services()
 
 	c, err := controller.NewController(a.MainClient, kanariniClient, canaryDeploymentInf, deploymentInf, serviceInf)
+
+	kanariniInformerFactory.Start(ctx.Done())
+	coreInformerFactory.Start(ctx.Done())
 	c.Run(a.Workers, ctx.Done())
 	return nil
 }

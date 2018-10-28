@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/atlassian/ctrl"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/flowcontrol"
+	"flag"
 )
 
 type RestClientOptions struct {
@@ -16,7 +16,7 @@ type RestClientOptions struct {
 	ClientContext        string
 }
 
-func BindRestClientFlags(o *RestClientOptions, fs ctrl.FlagSet) {
+func BindRestClientFlags(o *RestClientOptions, fs *flag.FlagSet) {
 	fs.Float64Var(&o.APIQPS, "api-qps", 5, "Maximum queries per second when talking to Kubernetes API")
 	fs.StringVar(&o.ClientConfigFileFrom, "client-config-from", "in-cluster",
 		"Source of REST client configuration. 'in-cluster' (default) and 'file' are valid options.")

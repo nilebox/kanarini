@@ -3,9 +3,9 @@ package app
 import (
 	"os"
 
-	"github.com/atlassian/ctrl"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"flag"
 )
 
 type LoggerOptions struct {
@@ -13,7 +13,7 @@ type LoggerOptions struct {
 	LogEncoding string
 }
 
-func BindLoggerFlags(o *LoggerOptions, fs ctrl.FlagSet) {
+func BindLoggerFlags(o *LoggerOptions, fs *flag.FlagSet) {
 	fs.StringVar(&o.LogLevel, "log-level", "info", `Sets the logger's output level.`)
 	fs.StringVar(&o.LogEncoding, "log-encoding", "json", `Sets the logger's encoding. Valid values are "json" and "console".`)
 }
