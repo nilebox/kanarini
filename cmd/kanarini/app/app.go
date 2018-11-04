@@ -15,7 +15,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"github.com/nilebox/kanarini/pkg/metrics"
-	resourceclient "k8s.io/metrics/pkg/client/clientset/versioned/typed/metrics/v1beta1"
 	"k8s.io/metrics/pkg/client/custom_metrics"
 	"k8s.io/metrics/pkg/client/external_metrics"
 	"k8s.io/client-go/restmapper"
@@ -98,7 +97,6 @@ func (a *App) Run(ctx context.Context) error {
 		ctx.Done())
 
 	metricsClient := metrics.NewRESTMetricsClient(
-		resourceclient.NewForConfigOrDie(a.RestConfig),
 		custom_metrics.NewForConfig(a.RestConfig, restMapper, apiVersionsGetter),
 		external_metrics.NewForConfigOrDie(a.RestConfig),
 	)

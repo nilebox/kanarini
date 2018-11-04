@@ -73,6 +73,7 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 				return false, err
 			}
 			val, _, err := c.metricsClient.GetObjectMetric(metricSpec.Object.Metric.Name, cd.Namespace, &metricSpec.Object.DescribedObject, metricSelector)
+			glog.V(4).Infof("Custom metric value: %v", val)
 			metricVal = val
 		case kanarini.ExternalMetricSourceType:
 			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.External.Metric.Selector)
