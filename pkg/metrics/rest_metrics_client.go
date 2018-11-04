@@ -20,15 +20,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
-
-	autoscaling "k8s.io/api/autoscaling/v2beta2"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	customapi "k8s.io/metrics/pkg/apis/custom_metrics/v1beta2"
-	resourceclient "k8s.io/metrics/pkg/client/clientset/versioned/typed/metrics/v1beta1"
 	customclient "k8s.io/metrics/pkg/client/custom_metrics"
 	externalclient "k8s.io/metrics/pkg/client/external_metrics"
 )
@@ -37,9 +32,8 @@ const (
 	metricServerDefaultMetricWindow = time.Minute
 )
 
-func NewRESTMetricsClient(resourceClient resourceclient.PodMetricsesGetter, customClient customclient.CustomMetricsClient, externalClient externalclient.ExternalMetricsClient) MetricsClient {
+func NewRESTMetricsClient(customClient customclient.CustomMetricsClient, externalClient externalclient.ExternalMetricsClient) MetricsClient {
 	return &restMetricsClient{
-		&resourceMetricsClient{resourceClient},
 		&customMetricsClient{customClient},
 		&externalMetricsClient{externalClient},
 	}
@@ -49,56 +43,8 @@ func NewRESTMetricsClient(resourceClient resourceclient.PodMetricsesGetter, cust
 // metrics from both the resource metrics API and the
 // custom metrics API.
 type restMetricsClient struct {
-	*resourceMetricsClient
 	*customMetricsClient
 	*externalMetricsClient
-}
-
-// resourceMetricsClient implements the resource-metrics-related parts of MetricsClient,
-// using data from the resource metrics API.
-type resourceMetricsClient struct {
-	client resourceclient.PodMetricsesGetter
-}
-
-// GetResourceMetric gets the given resource metric (and an associated oldest timestamp)
-// for all pods matching the specified selector in the given namespace
-func (c *resourceMetricsClient) GetResourceMetric(resource v1.ResourceName, namespace string, selector labels.Selector) (PodMetricsInfo, time.Time, error) {
-	metrics, err := c.client.PodMetricses(namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
-	if err != nil {
-		return nil, time.Time{}, fmt.Errorf("unable to fetch metrics from resource metrics API: %v", err)
-	}
-
-	if len(metrics.Items) == 0 {
-		return nil, time.Time{}, fmt.Errorf("no metrics returned from resource metrics API")
-	}
-
-	res := make(PodMetricsInfo, len(metrics.Items))
-
-	for _, m := range metrics.Items {
-		podSum := int64(0)
-		missing := len(m.Containers) == 0
-		for _, c := range m.Containers {
-			resValue, found := c.Usage[v1.ResourceName(resource)]
-			if !found {
-				missing = true
-				glog.V(2).Infof("missing resource metric %v for container %s in pod %s/%s", resource, c.Name, namespace, m.Name)
-				break // containers loop
-			}
-			podSum += resValue.MilliValue()
-		}
-
-		if !missing {
-			res[m.Name] = PodMetric{
-				Timestamp: m.Timestamp.Time,
-				Window:    m.Window.Duration,
-				Value:     int64(podSum),
-			}
-		}
-	}
-
-	timestamp := metrics.Items[0].Timestamp.Time
-
-	return res, timestamp, nil
 }
 
 // customMetricsClient implements the custom-metrics-related parts of MetricsClient,
@@ -107,41 +53,9 @@ type customMetricsClient struct {
 	client customclient.CustomMetricsClient
 }
 
-// GetRawMetric gets the given metric (and an associated oldest timestamp)
-// for all pods matching the specified selector in the given namespace
-func (c *customMetricsClient) GetRawMetric(metricName string, namespace string, selector labels.Selector, metricSelector labels.Selector) (PodMetricsInfo, time.Time, error) {
-	metrics, err := c.client.NamespacedMetrics(namespace).GetForObjects(schema.GroupKind{Kind: "Pod"}, selector, metricName, metricSelector)
-	if err != nil {
-		return nil, time.Time{}, fmt.Errorf("unable to fetch metrics from custom metrics API: %v", err)
-	}
-
-	if len(metrics.Items) == 0 {
-		return nil, time.Time{}, fmt.Errorf("no metrics returned from custom metrics API")
-	}
-
-	res := make(PodMetricsInfo, len(metrics.Items))
-	for _, m := range metrics.Items {
-		window := metricServerDefaultMetricWindow
-		if m.WindowSeconds != nil {
-			window = time.Duration(*m.WindowSeconds) * time.Second
-		}
-		res[m.DescribedObject.Name] = PodMetric{
-			Timestamp: m.Timestamp.Time,
-			Window:    window,
-			Value:     int64(m.Value.MilliValue()),
-		}
-
-		m.Value.MilliValue()
-	}
-
-	timestamp := metrics.Items[0].Timestamp.Time
-
-	return res, timestamp, nil
-}
-
 // GetObjectMetric gets the given metric (and an associated timestamp) for the given
 // object in the given namespace
-func (c *customMetricsClient) GetObjectMetric(metricName string, namespace string, objectRef *autoscaling.CrossVersionObjectReference, metricSelector labels.Selector) (int64, time.Time, error) {
+func (c *customMetricsClient) GetObjectMetric(metricName string, namespace string, objectRef *kanarini.CrossVersionObjectReference, metricSelector labels.Selector) (int64, time.Time, error) {
 	gvk := schema.FromAPIVersionAndKind(objectRef.APIVersion, objectRef.Kind)
 	var metricValue *customapi.MetricValue
 	var err error

@@ -36,9 +36,15 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		return err
 	}
 	// Wait for metric delay to expire
-	// TODO
+	// TODO wait for metric delay to expire
 	// Check the metric value and decide whether Service is healthy
-	// TODO
+	healthy, err := c.isServiceHealthy(cd, &cd.Spec.Tracks.Canary)
+	if err != nil {
+		return err
+	}
+	if !healthy {
+		// TODO rollback canary deployment and don't proceed for stable deployment
+	}
 	// Create a stable track deployment
 	stableTrackDeployment, err := c.createTrackDeployment(cd, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
 	// Wait for a canary track deployment to succeed
@@ -55,6 +61,41 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	}
 	// Done
 	return nil
+}
+
+func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeployment, trackSpec *kanarini.DeploymentTrackSpec) (bool, error) {
+	for _, metricSpec := range trackSpec.Metrics {
+		var metricVal int64 = 0
+		switch metricSpec.Type {
+		case kanarini.ObjectMetricSourceType:
+			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.Object.Metric.Selector)
+			if err != nil {
+				return false, err
+			}
+			val, _, err := c.metricsClient.GetObjectMetric(metricSpec.Object.Metric.Name, cd.Namespace, &metricSpec.Object.DescribedObject, metricSelector)
+			metricVal = val
+		case kanarini.ExternalMetricSourceType:
+			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.External.Metric.Selector)
+			if err != nil {
+				return false, err
+			}
+			metrics, _, err := c.metricsClient.GetExternalMetric(metricSpec.Object.Metric.Name, cd.Namespace, metricSelector)
+			var sum int64 = 0
+			for _, val := range metrics {
+				sum = sum + val
+			}
+			metricVal = sum
+		default:
+			return false, errors.New(fmt.Sprintf("Unexpected metric source type: %v", metricSpec.Type))
+		}
+
+		// If metric value is equal or greater than target value, it's considered unhealthy
+		if metricVal >= metricSpec.External.Target.Value.MilliValue() {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, dList []*apps.Deployment, trackSpec *kanarini.DeploymentTrackSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {

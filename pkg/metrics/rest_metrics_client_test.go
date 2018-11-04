@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	autoscalingapi "k8s.io/api/autoscaling/v2beta2"
+	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta/testrestmapper"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -33,13 +33,21 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	cmapi "k8s.io/metrics/pkg/apis/custom_metrics/v1beta2"
 	emapi "k8s.io/metrics/pkg/apis/external_metrics/v1beta1"
-	metricsapi "k8s.io/metrics/pkg/apis/metrics/v1beta1"
-	metricsfake "k8s.io/metrics/pkg/client/clientset/versioned/fake"
 	cmfake "k8s.io/metrics/pkg/client/custom_metrics/fake"
 	emfake "k8s.io/metrics/pkg/client/external_metrics/fake"
 
 	"github.com/stretchr/testify/assert"
 )
+
+// metricInfo contains pod metric value (the metric values are expected to be the metric as a milli-value)
+type metricInfo struct {
+	Timestamp time.Time
+	Window    time.Duration
+	Value     int64
+}
+
+// metricsInfo contains pod metrics as a map from pod names to metricsInfo
+type metricsInfo map[string]metricInfo
 
 // timestamp is used for establishing order on metricPoints
 type metricPoint struct {
@@ -54,7 +62,7 @@ func offsetTimestampBy(t int) time.Time {
 }
 
 type restClientTestCase struct {
-	desiredMetricValues PodMetricsInfo
+	desiredMetricValues metricsInfo
 	desiredError        error
 
 	// "timestamps" here are actually the offset in minutes from a base timestamp
@@ -62,65 +70,29 @@ type restClientTestCase struct {
 	window               time.Duration
 	reportedMetricPoints []metricPoint
 	reportedPodMetrics   [][]int64
-	singleObject         *autoscalingapi.CrossVersionObjectReference
+	singleObject         *kanarini.CrossVersionObjectReference
 
 	namespace           string
 	selector            labels.Selector
-	resourceName        v1.ResourceName
 	metricName          string
 	metricSelector      *metav1.LabelSelector
 	metricLabelSelector labels.Selector
 }
 
-func (tc *restClientTestCase) prepareTestClient(t *testing.T) (*metricsfake.Clientset, *cmfake.FakeCustomMetricsClient, *emfake.FakeExternalMetricsClient) {
+func (tc *restClientTestCase) prepareTestClient(t *testing.T) (*cmfake.FakeCustomMetricsClient, *emfake.FakeExternalMetricsClient) {
 	namespace := "test-namespace"
 	tc.namespace = namespace
 	podNamePrefix := "test-pod"
 	podLabels := map[string]string{"name": podNamePrefix}
 	tc.selector = labels.SelectorFromSet(podLabels)
 
-	// it's a resource test if we have a resource name
-	isResource := len(tc.resourceName) > 0
 	// it's an external test if we have a metric selector
 	isExternal := tc.metricSelector != nil
 
-	fakeMetricsClient := &metricsfake.Clientset{}
 	fakeCMClient := &cmfake.FakeCustomMetricsClient{}
 	fakeEMClient := &emfake.FakeExternalMetricsClient{}
 
-	if isResource {
-		fakeMetricsClient.AddReactor("list", "pods", func(action core.Action) (handled bool, ret runtime.Object, err error) {
-			metrics := &metricsapi.PodMetricsList{}
-			for i, containers := range tc.reportedPodMetrics {
-				metric := metricsapi.PodMetrics{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-%d", podNamePrefix, i),
-						Namespace: namespace,
-						Labels:    podLabels,
-					},
-					Timestamp:  metav1.Time{Time: offsetTimestampBy(tc.targetTimestamp)},
-					Window:     metav1.Duration{Duration: tc.window},
-					Containers: []metricsapi.ContainerMetrics{},
-				}
-				for j, cpu := range containers {
-					cm := metricsapi.ContainerMetrics{
-						Name: fmt.Sprintf("%s-%d-container-%d", podNamePrefix, i, j),
-						Usage: v1.ResourceList{
-							v1.ResourceCPU: *resource.NewMilliQuantity(
-								cpu,
-								resource.DecimalSI),
-							v1.ResourceMemory: *resource.NewQuantity(
-								int64(1024*1024),
-								resource.BinarySI),
-						},
-					}
-					metric.Containers = append(metric.Containers, cm)
-				}
-				metrics.Items = append(metrics.Items, metric)
-			}
-			return true, metrics, nil
-		})
-	} else if isExternal {
+	if isExternal {
 		fakeEMClient.AddReactor("list", "*", func(action core.Action) (handled bool, ret runtime.Object, err error) {
 			listAction := action.(core.ListAction)
 			assert.Equal(t, tc.metricName, listAction.GetResource().Resource, "the metric requested should have matched the one specified.")
@@ -205,10 +177,10 @@ func (tc *restClientTestCase) prepareTestClient(t *testing.T) (*metricsfake.Clie
 		})
 	}
 
-	return fakeMetricsClient, fakeCMClient, fakeEMClient
+	return fakeCMClient, fakeEMClient
 }
 
-func (tc *restClientTestCase) verifyResults(t *testing.T, metrics PodMetricsInfo, timestamp time.Time, err error) {
+func (tc *restClientTestCase) verifyResults(t *testing.T, metrics metricsInfo, timestamp time.Time, err error) {
 	if tc.desiredError != nil {
 		assert.Error(t, err, "there should be an error retrieving the metrics")
 		assert.Contains(t, fmt.Sprintf("%v", err), fmt.Sprintf("%v", tc.desiredError), "the error message should be as expected")
@@ -236,54 +208,29 @@ func (tc *restClientTestCase) verifyResults(t *testing.T, metrics PodMetricsInfo
 
 func (tc *restClientTestCase) runTest(t *testing.T) {
 	var err error
-	testMetricsClient, testCMClient, testEMClient := tc.prepareTestClient(t)
-	metricsClient := NewRESTMetricsClient(testMetricsClient.MetricsV1beta1(), testCMClient, testEMClient)
-	isResource := len(tc.resourceName) > 0
+	testCMClient, testEMClient := tc.prepareTestClient(t)
+	metricsClient := NewRESTMetricsClient(testCMClient, testEMClient)
 	isExternal := tc.metricSelector != nil
-	if isResource {
-		info, timestamp, err := metricsClient.GetResourceMetric(v1.ResourceName(tc.resourceName), tc.namespace, tc.selector)
-		tc.verifyResults(t, info, timestamp, err)
-	} else if isExternal {
+	if isExternal {
 		tc.metricLabelSelector, err = metav1.LabelSelectorAsSelector(tc.metricSelector)
 		if err != nil {
 			t.Errorf("invalid metric selector: %+v", tc.metricSelector)
 		}
 		val, timestamp, err := metricsClient.GetExternalMetric(tc.metricName, tc.namespace, tc.metricLabelSelector)
-		info := make(PodMetricsInfo, len(val))
+		info := make(metricsInfo, len(val))
 		for i, metricVal := range val {
-			info[fmt.Sprintf("%v-val-%v", tc.metricName, i)] = PodMetric{Value: metricVal}
+			info[fmt.Sprintf("%v-val-%v", tc.metricName, i)] = metricInfo{Value: metricVal}
 		}
-		tc.verifyResults(t, info, timestamp, err)
-	} else if tc.singleObject == nil {
-		info, timestamp, err := metricsClient.GetRawMetric(tc.metricName, tc.namespace, tc.selector, tc.metricLabelSelector)
 		tc.verifyResults(t, info, timestamp, err)
 	} else {
 		val, timestamp, err := metricsClient.GetObjectMetric(tc.metricName, tc.namespace, tc.singleObject, tc.metricLabelSelector)
-		info := PodMetricsInfo{tc.singleObject.Name: {Value: val}}
+		info := metricsInfo{tc.singleObject.Name: {Value: val}}
 		tc.verifyResults(t, info, timestamp, err)
 	}
 }
-
-func TestRESTClientCPU(t *testing.T) {
-	targetTimestamp := 1
-	window := 30 * time.Second
-	tc := restClientTestCase{
-		desiredMetricValues: PodMetricsInfo{
-			"test-pod-0": {Value: 5000, Timestamp: offsetTimestampBy(targetTimestamp), Window: window},
-			"test-pod-1": {Value: 5000, Timestamp: offsetTimestampBy(targetTimestamp), Window: window},
-			"test-pod-2": {Value: 5000, Timestamp: offsetTimestampBy(targetTimestamp), Window: window},
-		},
-		resourceName:       v1.ResourceCPU,
-		targetTimestamp:    targetTimestamp,
-		window:             window,
-		reportedPodMetrics: [][]int64{{5000}, {5000}, {5000}},
-	}
-	tc.runTest(t)
-}
-
 func TestRESTClientExternal(t *testing.T) {
 	tc := restClientTestCase{
-		desiredMetricValues: PodMetricsInfo{
+		desiredMetricValues: metricsInfo{
 			"external-val-0": {Value: 10000}, "external-val-1": {Value: 20000}, "external-val-2": {Value: 10000},
 		},
 		metricSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{"label": "value"}},
@@ -294,28 +241,13 @@ func TestRESTClientExternal(t *testing.T) {
 	tc.runTest(t)
 }
 
-func TestRESTClientQPS(t *testing.T) {
-	targetTimestamp := 1
-	tc := restClientTestCase{
-		desiredMetricValues: PodMetricsInfo{
-			"test-pod-0": {Value: 10000, Timestamp: offsetTimestampBy(targetTimestamp), Window: metricServerDefaultMetricWindow},
-			"test-pod-1": {Value: 20000, Timestamp: offsetTimestampBy(targetTimestamp), Window: metricServerDefaultMetricWindow},
-			"test-pod-2": {Value: 10000, Timestamp: offsetTimestampBy(targetTimestamp), Window: metricServerDefaultMetricWindow},
-		},
-		metricName:           "qps",
-		targetTimestamp:      targetTimestamp,
-		reportedMetricPoints: []metricPoint{{10000, 1}, {20000, 1}, {10000, 1}},
-	}
-	tc.runTest(t)
-}
-
 func TestRESTClientSingleObject(t *testing.T) {
 	tc := restClientTestCase{
-		desiredMetricValues:  PodMetricsInfo{"some-dep": {Value: 10}},
+		desiredMetricValues:  metricsInfo{"some-dep": {Value: 10}},
 		metricName:           "queue-length",
 		targetTimestamp:      1,
 		reportedMetricPoints: []metricPoint{{10, 1}},
-		singleObject: &autoscalingapi.CrossVersionObjectReference{
+		singleObject: &kanarini.CrossVersionObjectReference{
 			APIVersion: "extensions/v1beta1",
 			Kind:       "Deployment",
 			Name:       "some-dep",
@@ -324,24 +256,9 @@ func TestRESTClientSingleObject(t *testing.T) {
 	tc.runTest(t)
 }
 
-func TestRESTClientQpsSumEqualZero(t *testing.T) {
-	targetTimestamp := 0
-	tc := restClientTestCase{
-		desiredMetricValues: PodMetricsInfo{
-			"test-pod-0": {Value: 0, Timestamp: offsetTimestampBy(targetTimestamp), Window: metricServerDefaultMetricWindow},
-			"test-pod-1": {Value: 0, Timestamp: offsetTimestampBy(targetTimestamp), Window: metricServerDefaultMetricWindow},
-			"test-pod-2": {Value: 0, Timestamp: offsetTimestampBy(targetTimestamp), Window: metricServerDefaultMetricWindow},
-		},
-		metricName:           "qps",
-		targetTimestamp:      targetTimestamp,
-		reportedMetricPoints: []metricPoint{{0, 0}, {0, 0}, {0, 0}},
-	}
-	tc.runTest(t)
-}
-
 func TestRESTClientExternalSumEqualZero(t *testing.T) {
 	tc := restClientTestCase{
-		desiredMetricValues: PodMetricsInfo{
+		desiredMetricValues: metricsInfo{
 			"external-val-0": {Value: 0}, "external-val-1": {Value: 0}, "external-val-2": {Value: 0},
 		},
 		metricSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{"label": "value"}},
@@ -349,16 +266,6 @@ func TestRESTClientExternalSumEqualZero(t *testing.T) {
 		targetTimestamp:      0,
 		reportedMetricPoints: []metricPoint{{0, 0}, {0, 0}, {0, 0}},
 	}
-	tc.runTest(t)
-}
-
-func TestRESTClientQpsEmptyMetrics(t *testing.T) {
-	tc := restClientTestCase{
-		metricName:           "qps",
-		desiredError:         fmt.Errorf("no metrics returned from custom metrics API"),
-		reportedMetricPoints: []metricPoint{},
-	}
-
 	tc.runTest(t)
 }
 
@@ -370,31 +277,5 @@ func TestRESTClientExternalEmptyMetrics(t *testing.T) {
 		reportedMetricPoints: []metricPoint{},
 	}
 
-	tc.runTest(t)
-}
-
-func TestRESTClientCPUEmptyMetrics(t *testing.T) {
-	tc := restClientTestCase{
-		resourceName:         v1.ResourceCPU,
-		desiredError:         fmt.Errorf("no metrics returned from resource metrics API"),
-		reportedMetricPoints: []metricPoint{},
-		reportedPodMetrics:   [][]int64{},
-	}
-	tc.runTest(t)
-}
-
-func TestRESTClientCPUEmptyMetricsForOnePod(t *testing.T) {
-	targetTimestamp := 1
-	window := 30 * time.Second
-	tc := restClientTestCase{
-		resourceName: v1.ResourceCPU,
-		desiredMetricValues: PodMetricsInfo{
-			"test-pod-0": {Value: 100, Timestamp: offsetTimestampBy(targetTimestamp), Window: window},
-			"test-pod-1": {Value: 700, Timestamp: offsetTimestampBy(targetTimestamp), Window: window},
-		},
-		targetTimestamp:    targetTimestamp,
-		window:             window,
-		reportedPodMetrics: [][]int64{{100}, {300, 400}, {}},
-	}
 	tc.runTest(t)
 }

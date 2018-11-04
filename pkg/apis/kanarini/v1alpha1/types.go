@@ -150,14 +150,22 @@ type DeploymentTrackSpec struct {
 // MetricSpec specifies how to scale based on a single metric
 // (only `type` and one other matching field should be set at once).
 type MetricSpec struct {
-	// type is the type of metric source.  It should be one of "Object",
-	// "Pods" or "Resource", each mapping to a matching field in the object.
+	// type is the type of metric source.  It should be one of "Object"
+	// or "External", each mapping to a matching field in the object.
 	Type MetricSourceType `json:"type" protobuf:"bytes,1,name=type"`
 
 	// object refers to a metric describing a single kubernetes object
 	// (for example, hits-per-second on an Ingress object).
 	// +optional
 	Object *ObjectMetricSource `json:"object,omitempty" protobuf:"bytes,2,opt,name=object"`
+
+	// External refers to a global metric that is not associated
+	// with any Kubernetes object. It allows making decision based on information
+	// coming from components running outside of cluster
+	// (for example length of queue in cloud messaging service, or
+	// QPS from loadbalancer running outside of cluster).
+	// +optional
+	External *ExternalMetricSource
 }
 
 // MetricSourceType indicates the type of metric.
@@ -167,6 +175,12 @@ var (
 	// ObjectMetricSourceType is a metric describing a kubernetes object
 	// (for example, hits-per-second on an Ingress object).
 	ObjectMetricSourceType MetricSourceType = "Object"
+	// ExternalMetricSourceType is a global metric that is not associated
+	// with any Kubernetes object. It allows autoscaling based on information
+	// coming from components running outside of cluster
+	// (for example length of queue in cloud messaging service, or
+	// QPS from loadbalancer running outside of cluster).
+	ExternalMetricSourceType MetricSourceType = "External"
 )
 
 // ObjectMetricSource indicates how to scale on a metric describing a
@@ -177,6 +191,16 @@ type ObjectMetricSource struct {
 	Target MetricTarget `json:"target" protobuf:"bytes,2,name=target"`
 	// metric identifies the target metric by name and selector
 	Metric MetricIdentifier `json:"metric" protobuf:"bytes,3,name=metric"`
+}
+
+// ExternalMetricSource indicates how to scale on a metric not associated with
+// any Kubernetes object (for example length of queue in cloud
+// messaging service, or QPS from loadbalancer running outside of cluster).
+type ExternalMetricSource struct {
+	// Metric identifies the target metric by name and selector
+	Metric MetricIdentifier
+	// Target specifies the target value for the given metric
+	Target MetricTarget
 }
 
 // CrossVersionObjectReference contains enough information to let you identify the referred resource.
@@ -190,38 +214,22 @@ type CrossVersionObjectReference struct {
 	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,3,opt,name=apiVersion"`
 }
 
-// MetricTarget defines the target value, average value, or average utilization of a specific metric
+// MetricTarget defines the target value of a specific metric
 type MetricTarget struct {
-	// TODO nilebox: All values here are copied from HPA and are quantity based. For Services we actually need "boolean" or "threshold" metrics
-
-	// type represents whether the metric type is Utilization, Value, or AverageValue
+	// type represents the metric type
 	Type MetricTargetType `json:"type" protobuf:"bytes,1,name=type"`
 	// value is the target value of the metric (as a quantity).
 	// +optional
 	Value *resource.Quantity `json:"value,omitempty" protobuf:"bytes,2,opt,name=value"`
-	// averageValue is the target value of the average of the
-	// metric across all relevant pods (as a quantity)
-	// +optional
-	AverageValue *resource.Quantity `json:"averageValue,omitempty" protobuf:"bytes,3,opt,name=averageValue"`
-	// averageUtilization is the target value of the average of the
-	// resource metric across all relevant pods, represented as a percentage of
-	// the requested value of the resource for the pods.
-	// Currently only valid for Resource metric source type
-	// +optional
-	AverageUtilization *int32 `json:"averageUtilization,omitempty" protobuf:"bytes,4,opt,name=averageUtilization"`
 }
 
-// MetricTargetType specifies the type of metric being targeted, and should be either
-// "Value", "AverageValue", or "Utilization"
+// MetricTargetType specifies the type of metric being targeted, only
+// "Value" is supported
 type MetricTargetType string
 
 var (
-	// UtilizationMetricType declares a MetricTarget is an AverageUtilization value
-	UtilizationMetricType MetricTargetType = "Utilization"
 	// ValueMetricType declares a MetricTarget is a raw value
 	ValueMetricType MetricTargetType = "Value"
-	// AverageValueMetricType declares a MetricTarget is an
-	AverageValueMetricType MetricTargetType = "AverageValue"
 )
 
 // MetricIdentifier defines the name and optionally selector for a metric
