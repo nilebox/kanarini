@@ -82,6 +82,7 @@ type CanaryDeploymentController struct {
 func NewController(
 	kubeClient kubernetes.Interface,
 	kanariniClient kanariniclientset.KanariniV1alpha1Interface,
+	metricsClient                 metricsclient.MetricsClient,
 	cdInformer informers.CanaryDeploymentInformer,
 	dInformer appsinformers.DeploymentInformer,
 	sInformer coreinformers.ServiceInformer,
@@ -113,6 +114,7 @@ func NewController(
 	cdc := &CanaryDeploymentController{
 		kubeClient:     kubeClient,
 		kanariniClient: kanariniClient,
+		metricsClient: metricsClient,
 		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "canary-deployment"),
 		eventRecorder:  eventBroadcaster.NewRecorder(eventsScheme, v1.EventSource{Component: "canary-deployment-cdc"}),
 	}

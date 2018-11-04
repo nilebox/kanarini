@@ -5,6 +5,7 @@ import (
 	"flag"
 	"time"
 
+	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	kanariniclientset "github.com/nilebox/kanarini/pkg/client/clientset_generated/clientset"
 	kanariniclientset_typed "github.com/nilebox/kanarini/pkg/client/clientset_generated/clientset/typed/kanarini/v1alpha1"
 	kanariniinformers "github.com/nilebox/kanarini/pkg/client/informers_generated/externalversions"
@@ -13,6 +14,12 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"github.com/nilebox/kanarini/pkg/metrics"
+	resourceclient "k8s.io/metrics/pkg/client/clientset/versioned/typed/metrics/v1beta1"
+	"k8s.io/metrics/pkg/client/custom_metrics"
+	"k8s.io/metrics/pkg/client/external_metrics"
+	"k8s.io/client-go/restmapper"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type App struct {
@@ -76,6 +83,26 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	kanariniClient := kanariniclientset_typed.New(kanariniClientset.RESTClient())
 
+	// Use a discovery client capable of being refreshed.
+	cachedClient := cacheddiscovery.NewMemCacheClient(a.MainClient.Discovery())
+	restMapper := restmapper.NewDeferredDiscoveryRESTMapper(cachedClient)
+	go wait.Until(func() {
+		restMapper.Reset()
+	}, 30*time.Second, ctx.Done())
+	apiVersionsGetter := custom_metrics.NewAvailableAPIsGetter(a.MainClient.Discovery())
+	// invalidate the discovery information roughly once per resync interval our API
+	// information is *at most* two resync intervals old.
+	go custom_metrics.PeriodicallyInvalidate(
+		apiVersionsGetter,
+		45 * time.Second, // TODO: make configurable
+		ctx.Done())
+
+	metricsClient := metrics.NewRESTMetricsClient(
+		resourceclient.NewForConfigOrDie(a.RestConfig),
+		custom_metrics.NewForConfig(a.RestConfig, restMapper, apiVersionsGetter),
+		external_metrics.NewForConfigOrDie(a.RestConfig),
+	)
+
 	// Build the informer factory for kanarini resources
 	kanariniInformerFactory := kanariniinformers.NewSharedInformerFactory(
 		kanariniClientset,
@@ -88,7 +115,7 @@ func (a *App) Run(ctx context.Context) error {
 	deploymentInf := appsSharedInformers.Deployments()
 	serviceInf := coreSharedInformers.Services()
 
-	c, err := controller.NewController(a.MainClient, kanariniClient, canaryDeploymentInf, deploymentInf, serviceInf)
+	c, err := controller.NewController(a.MainClient, kanariniClient, metricsClient, canaryDeploymentInf, deploymentInf, serviceInf)
 
 	kanariniInformerFactory.Start(ctx.Done())
 	coreInformerFactory.Start(ctx.Done())
