@@ -28,7 +28,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/kubernetes/pkg/util/metrics"
+	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/util/metrics"
+	metricsclient "github.com/nilebox/kanarini/pkg/metrics"
 )
 
 const (
@@ -48,6 +49,7 @@ var canaryDeploymentKind = kanarini.CanaryDeploymentGVK
 type CanaryDeploymentController struct {
 	kubeClient     kubernetes.Interface
 	kanariniClient kanariniclientset.KanariniV1alpha1Interface
+	metricsClient                 metricsclient.MetricsClient
 
 	// To allow injection of syncDeployment for testing.
 	syncHandler func(dKey string) error
