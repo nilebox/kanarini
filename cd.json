@@ -1,0 +1,75 @@
+{
+  "kind": "CanaryDeployment",
+  "apiVersion": "kanarini.nilebox.github.com/v1alpha1",
+  "metadata": {
+    "name": "example",
+    "namespace": "example",
+    "selfLink": "/apis/kanarini.nilebox.github.com/v1alpha1/namespaces/example/canarydeployments/example",
+    "uid": "8ffc5b55-da8d-11e8-a72d-0800277dcb31",
+    "resourceVersion": "73844",
+    "generation": 1,
+    "creationTimestamp": "2018-10-28T08:43:37Z",
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kanarini.nilebox.github.com/v1alpha1\",\"kind\":\"CanaryDeployment\",\"metadata\":{\"annotations\":{},\"name\":\"example\",\"namespace\":\"example\"},\"spec\":{\"podTemplate\":{\"metadata\":{\"labels\":{\"app\":\"nginx\"}},\"spec\":{\"containers\":[{\"image\":\"nginx:1.15.4\",\"name\":\"nginx\",\"ports\":[{\"containerPort\":80}]}]}},\"serviceTemplate\":{\"ports\":[{\"port\":80,\"protocol\":\"TCP\",\"targetPort\":9376}],\"selector\":{\"app\":\"nginx\"}},\"tracks\":{\"canary\":{\"metrics\":[{\"object\":{\"describedObject\":{\"kind\":\"Service\",\"metric\":{\"name\":\"somemetric\"},\"name\":\"example-canary\",\"target\":{\"type\":\"value\",\"value\":300}}},\"type\":\"object\"}],\"replicas\":1,\"serviceName\":\"example-canary\"},\"stable\":{\"replicas\":5,\"serviceName\":\"example-stable\"}}}}\n"
+    }
+  },
+  "spec": {
+    "selector": null,
+    "podTemplate": {
+      "metadata": {
+        "creationTimestamp": null,
+        "labels": {
+          "app": "nginx"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "nginx",
+            "image": "nginx:1.15.4",
+            "ports": [
+              {
+                "containerPort": 80
+              }
+            ],
+            "resources": {}
+          }
+        ]
+      }
+    },
+    "serviceTemplate": {
+      "metadata": {
+        "creationTimestamp": null
+      },
+      "spec": {}
+    },
+    "tracks": {
+      "canary": {
+        "replicas": 1,
+        "serviceName": "example-canary",
+        "metrics": [
+          {
+            "type": "object",
+            "object": {
+              "describedObject": {
+                "kind": "Service",
+                "name": "example-canary"
+              },
+              "target": {
+                "type": ""
+              },
+              "metric": {
+                "name": ""
+              }
+            }
+          }
+        ]
+      },
+      "stable": {
+        "replicas": 5,
+        "serviceName": "example-stable"
+      }
+    }
+  },
+  "status": {}
+}

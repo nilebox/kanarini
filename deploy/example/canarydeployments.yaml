@@ -16,12 +16,13 @@ spec:
         ports:
         - containerPort: 80
   serviceTemplate:
-    selector:
-      app: nginx
-    ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 9376
+    spec:
+      selector:
+        app: nginx
+      ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 9376
   tracks:
     canary:
       replicas: 1

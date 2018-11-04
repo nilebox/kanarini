@@ -14,8 +14,18 @@ const (
 	//
 	// FailedDeploymentCreateReason is added in a canary deployment when it cannot create a new deployment.
 	FailedDeploymentCreateReason = "DeploymentCreateError"
-	// NewDeploymentReason is added in a deployment when it creates a new deployment.
+	// NewDeploymentReason is added in a canary deployment when it creates a new deployment.
 	NewDeploymentReason = "NewDeploymentCreated"
+
+
+	// Reasons for deployment conditions
+	//
+	// Progressing:
+	//
+	// FailedServiceCreateReason is added in a canary deployment when it cannot create a new service.
+	FailedServiceCreateReason = "DeploymentCreateError"
+	// NewServiceReason is added in a canary deployment when it creates a new service.
+	NewServiceReason = "NewServiceCreated"
 )
 
 func HasProgressDeadline(d *kanarini.CanaryDeployment) bool {
