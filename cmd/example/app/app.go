@@ -136,7 +136,7 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 		</head>
 		<body>
 			<div id="main" class="main">
-				<H1>%s</H1>
+				%s
 			</div>
 		</body>
 	</html>`,
@@ -151,7 +151,7 @@ func allEmojis() string {
 		b.WriteString(k)
 		b.WriteString(": ")
 		b.WriteString(v)
-		b.WriteString("\n")
+		b.WriteString("<p/>")
 	}
 	return b.String()
 }
