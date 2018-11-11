@@ -144,7 +144,7 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
   					display: table;
   					position: absolute;
   					height: 100%%;
- 					 width: 100%%;
+ 					width: 100%%;
 				}
 				.middle {
 					display: table-cell;

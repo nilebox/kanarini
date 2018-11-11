@@ -31,7 +31,6 @@ var sadCodes = []string{
 	":thumbsdown:",
 	":cry:",
 	":fire:",
-	":no_entry:",
 	":no_entry_sign:",
 	":sos:",
 	":slightly_frowning_face:",
@@ -39,9 +38,7 @@ var sadCodes = []string{
 	":shit:",
 	":rotating_light:",
 	":x:",
-	":stop_sign:",
 	":tired_face:",
 	":flushed:",
 	":skull_and_crossbones:",
-	":red_circle:",
 }

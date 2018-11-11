@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: example
-        image: nilebox/kanarini-example:0.0.0-e0ae4f2
+        image: nilebox/kanarini-example:0.0.0-2cff6f5
         args:
         - --error-rate
         - "0.8"
