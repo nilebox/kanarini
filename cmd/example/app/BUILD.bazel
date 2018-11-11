@@ -4,7 +4,9 @@ go_library(
     name = "go_default_library",
     srcs = [
         "app.go",
+        "emoji_categories.go",
         "emoji_codemap.go",
+        "emotions.go",
     ],
     importpath = "github.com/nilebox/kanarini/cmd/example/app",
     visibility = ["//visibility:public"],

@@ -138,16 +138,32 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 				body {
  					font-size: 300px;
 					text-align: center;
+					background-color: %s;
 				}
-				.content {
-					max-width: 500px;
-					margin: auto;
+				.outer {
+  					display: table;
+  					position: absolute;
+  					height: 100%%;
+ 					 width: 100%%;
+				}
+				.middle {
+					display: table-cell;
+					vertical-align: middle;
+				}
+				.inner {
+					margin-left: auto;
+					margin-right: auto;
+					width: 400px;
 				}
 			</style>
 		</head>
-		<body backgroundColor="%s">
-			<div class="content">
-				%s
+		<body>
+			<div class="outer">
+				<div class="middle">
+					<div class="inner">
+						%s
+					</div>
+				</div>
 			</div>
 		</body>
 	</html>`,
@@ -176,7 +192,7 @@ func (a *App) getResponseCode(emotion Emotion) int {
 	case EmotionSad:
 		return http.StatusInternalServerError
 	default:
-		panic(fmt.Sprintf("unexpected emotion: %s", emotion)
+		panic(fmt.Sprintf("unexpected emotion: %s", emotion))
 	}
 }
 
@@ -187,7 +203,7 @@ func (a *App) getBackgroundColor(emotion Emotion) string {
 	case EmotionSad:
 		return color_red
 	default:
-		panic(fmt.Sprintf("unexpected emotion: %s", emotion)
+		panic(fmt.Sprintf("unexpected emotion: %s", emotion))
 	}
 }
 
@@ -198,7 +214,7 @@ func (a *App) generateEmoji(emotion Emotion) string {
 	case EmotionSad:
 		return emojiCodeMap[a.getRandomItem(sadCodes)]
 	default:
-		panic(fmt.Sprintf("unexpected emotion: %s", emotion)
+		panic(fmt.Sprintf("unexpected emotion: %s", emotion))
 	}
 }
 
