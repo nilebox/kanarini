@@ -15,7 +15,6 @@ import (
 	"github.com/nilebox/kanarini/pkg/util/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
-	"bytes"
 )
 
 const (
@@ -110,15 +109,6 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) handler() http.Handler {
-	//fn := func(w http.ResponseWriter, r *http.Request) {
-	//	w.Header().Set("Content-Type", "application/json")
-	//	status := a.getResponseCode()
-	//	w.WriteHeader(status)
-	//	_, err := w.Write([]byte(fmt.Sprintf(`{ "responseCode": "%v" }`, status)))
-	//	if err != nil {
-	//		a.Logger.Warn("failed to write response body")
-	//	}
-	//}
 	return http.HandlerFunc(a.indexHandler)
 }
 
@@ -156,6 +146,11 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 					width: 400px;
 				}
 			</style>
+			<script language="javascript">
+				setTimeout(function(){
+					window.location.reload(1);
+				}, 1000);
+			</script>
 		</head>
 		<body>
 			<div class="outer">
@@ -169,20 +164,7 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 	</html>`,
 		a.getBackgroundColor(emotion),
 		a.generateEmoji(emotion))
-	//allEmojis())
-	//emojiCodeMap[":+1:"])
 	w.Write([]byte(html))
-}
-
-func allEmojis() string {
-	b := bytes.Buffer{}
-	for k, v := range emojiCodeMap {
-		b.WriteString(k)
-		b.WriteString(": ")
-		b.WriteString(v)
-		b.WriteString("<p/>")
-	}
-	return b.String()
 }
 
 func (a *App) getResponseCode(emotion Emotion) int {
@@ -199,9 +181,9 @@ func (a *App) getResponseCode(emotion Emotion) int {
 func (a *App) getBackgroundColor(emotion Emotion) string {
 	switch emotion {
 	case EmotionHappy:
-		return color_green
+		return backgroundColorGreen
 	case EmotionSad:
-		return color_red
+		return backgroundColorRed
 	default:
 		panic(fmt.Sprintf("unexpected emotion: %s", emotion))
 	}

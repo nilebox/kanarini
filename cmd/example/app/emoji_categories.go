@@ -1,7 +1,7 @@
 package app
 
-var color_green = "#A5D6A7"
-var color_red = "#EF9A9A"
+var backgroundColorGreen = "#A5D6A7"
+var backgroundColorRed = "#EF9A9A"
 
 var happyCodes = []string{
 	":sunglasses:",
@@ -31,7 +31,6 @@ var sadCodes = []string{
 	":thumbsdown:",
 	":cry:",
 	":fire:",
-	":no_entry_sign:",
 	":sos:",
 	":slightly_frowning_face:",
 	":nauseated_face:",
