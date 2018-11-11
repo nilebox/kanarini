@@ -112,7 +112,7 @@ func (a *App) Run(ctx context.Context) error {
 func (a *App) handler() http.Handler {
 	//fn := func(w http.ResponseWriter, r *http.Request) {
 	//	w.Header().Set("Content-Type", "application/json")
-	//	status := a.generateResponseCode()
+	//	status := a.getResponseCode()
 	//	w.WriteHeader(status)
 	//	_, err := w.Write([]byte(fmt.Sprintf(`{ "responseCode": "%v" }`, status)))
 	//	if err != nil {
@@ -124,7 +124,8 @@ func (a *App) handler() http.Handler {
 
 func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	status := a.generateResponseCode()
+	emotion := a.generateEmotion()
+	status := a.getResponseCode(emotion)
 	w.WriteHeader(status)
 
 	html := fmt.Sprintf(`
@@ -133,14 +134,26 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 		<head>
 			<meta charset="UTF-8">
 			<title>Emoji Generator</title>
+			<style rel="stylesheet" type="text/css">
+				body {
+ 					font-size: 300px;
+					text-align: center;
+				}
+				.content {
+					max-width: 500px;
+					margin: auto;
+				}
+			</style>
 		</head>
-		<body>
-			<div id="main" class="main">
+		<body backgroundColor="%s">
+			<div class="content">
 				%s
 			</div>
 		</body>
 	</html>`,
-	allEmojis())
+		a.getBackgroundColor(emotion),
+		a.generateEmoji(emotion))
+	//allEmojis())
 	//emojiCodeMap[":+1:"])
 	w.Write([]byte(html))
 }
@@ -156,12 +169,51 @@ func allEmojis() string {
 	return b.String()
 }
 
-func (a *App) generateResponseCode() int {
+func (a *App) getResponseCode(emotion Emotion) int {
+	switch emotion {
+	case EmotionHappy:
+		return http.StatusOK
+	case EmotionSad:
+		return http.StatusInternalServerError
+	default:
+		panic(fmt.Sprintf("unexpected emotion: %s", emotion)
+	}
+}
+
+func (a *App) getBackgroundColor(emotion Emotion) string {
+	switch emotion {
+	case EmotionHappy:
+		return color_green
+	case EmotionSad:
+		return color_red
+	default:
+		panic(fmt.Sprintf("unexpected emotion: %s", emotion)
+	}
+}
+
+func (a *App) generateEmoji(emotion Emotion) string {
+	switch emotion {
+	case EmotionHappy:
+		return emojiCodeMap[a.getRandomItem(happyCodes)]
+	case EmotionSad:
+		return emojiCodeMap[a.getRandomItem(sadCodes)]
+	default:
+		panic(fmt.Sprintf("unexpected emotion: %s", emotion)
+	}
+}
+
+func (a *App) getRandomItem(items []string) string {
+	return items[rand.Intn(len(items))]
+}
+
+func (a *App) generateEmotion() Emotion {
 	num := float64(rand.Intn(101))
 	target := a.ErrorRate * 100
 	if num > target {
-		return http.StatusOK
+		return EmotionHappy
 	} else {
-		return http.StatusInternalServerError
+		return EmotionSad
 	}
 }
+
+
