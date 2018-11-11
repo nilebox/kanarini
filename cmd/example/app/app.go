@@ -15,6 +15,7 @@ import (
 	"github.com/nilebox/kanarini/pkg/util/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"bytes"
 )
 
 const (
@@ -109,16 +110,50 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) handler() http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		status := a.generateResponseCode()
-		w.WriteHeader(status)
-		_, err := w.Write([]byte(fmt.Sprintf(`{ "responseCode": "%v" }`, status)))
-		if err != nil {
-			a.Logger.Warn("failed to write response body")
-		}
+	//fn := func(w http.ResponseWriter, r *http.Request) {
+	//	w.Header().Set("Content-Type", "application/json")
+	//	status := a.generateResponseCode()
+	//	w.WriteHeader(status)
+	//	_, err := w.Write([]byte(fmt.Sprintf(`{ "responseCode": "%v" }`, status)))
+	//	if err != nil {
+	//		a.Logger.Warn("failed to write response body")
+	//	}
+	//}
+	return http.HandlerFunc(a.indexHandler)
+}
+
+func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	status := a.generateResponseCode()
+	w.WriteHeader(status)
+
+	html := fmt.Sprintf(`
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="UTF-8">
+			<title>Emoji Generator</title>
+		</head>
+		<body>
+			<div id="main" class="main">
+				<H1>%s</H1>
+			</div>
+		</body>
+	</html>`,
+	allEmojis())
+	//emojiCodeMap[":+1:"])
+	w.Write([]byte(html))
+}
+
+func allEmojis() string {
+	b := bytes.Buffer{}
+	for k, v := range emojiCodeMap {
+		b.WriteString(k)
+		b.WriteString(": ")
+		b.WriteString(v)
+		b.WriteString("\n")
 	}
-	return http.HandlerFunc(fn)
+	return b.String()
 }
 
 func (a *App) generateResponseCode() int {

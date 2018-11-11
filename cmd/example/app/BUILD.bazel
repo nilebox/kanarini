@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["app.go"],
+    srcs = [
+        "app.go",
+        "emoji_codemap.go",
+    ],
     importpath = "github.com/nilebox/kanarini/cmd/example/app",
     visibility = ["//visibility:public"],
     deps = [
