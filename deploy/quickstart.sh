@@ -57,6 +57,20 @@ kubectl apply -f ./heptio-contour
 
 echo "-----------------------------------------------------------------------"
 
+# Install Prometheus Operator
+echo "Installing Prometheus Operator into cluster"
+kubectl apply -f ./prometheus-operator
+
+echo "-----------------------------------------------------------------------"
+
+# Install Custom Metrics API Server
+echo "Installing Custom Metrics API Server into cluster"
+./custom-metrics-api/gencerts.sh
+./custom-metrics-api/deploy.sh
+./custom-metrics-api/cleanup.sh
+
+echo "-----------------------------------------------------------------------"
+
 # Install manual example
 echo "Installing manual example into cluster"
 kubectl apply -f ./example-manual
