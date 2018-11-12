@@ -149,8 +149,13 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
                 setInterval(function(){
 					url = "/info"
 					fetch(url)
-						.then(response=>response.text())
-						.then(data=>{console.log(data)})
+						.then(response=>response.json())
+						.then(data=>{
+							console.log(data);
+							document.getElementById("version").innerHTML = data.version;
+							document.getElementById("emoji").innerHTML = data.emoji;
+							document.body.style.background = data.color;
+						})
 				}, 1000);
 			</script>
 		</head>
