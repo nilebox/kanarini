@@ -113,10 +113,7 @@ func (a *App) Run(ctx context.Context) error {
 
 func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	emotion := a.generateEmotion()
-	status := a.getResponseCode(emotion)
-	w.WriteHeader(status)
-
+	w.WriteHeader(http.StatusOK)
 	html := `
 	<!DOCTYPE html>
 	<html>
@@ -131,8 +128,8 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 				.outer {
   					display: table;
   					position: absolute;
-  					height: 100%%;
- 					width: 100%%;
+  					height: 100%;
+ 					width: 100%;
 				}
 				.middle {
 					display: table-cell;
