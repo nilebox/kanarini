@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: emoji
-        image: nilebox/kanarini-example:0.0.0-beb8d1d
+        image: nilebox/kanarini-example:0.0.0-2211718
         args:
         - --error-rate
         - "1.0"
@@ -69,7 +69,7 @@ spec:
     spec:
       containers:
       - name: emoji
-        image: nilebox/kanarini-example:0.0.0-beb8d1d
+        image: nilebox/kanarini-example:0.0.0-2211718
         args:
         - --error-rate
         - "0.0"

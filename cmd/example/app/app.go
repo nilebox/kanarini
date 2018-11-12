@@ -147,6 +147,7 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
                 setInterval(function(){
 					url = "/emoji"
 					fetch(url)
+						.then(response=>response.text())
 						.then(data=>{console.log(data)})
 				}, 1000);
 			</script>
