@@ -13,15 +13,30 @@ metadata:
   # the original remote IP address.
   service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
 spec:
- ports:
- - port: 80
-   name: http
-   protocol: TCP
-   targetPort: 8080
- - port: 443
-   name: https
-   protocol: TCP
-   targetPort: 8443
- selector:
-   app: contour
- type: LoadBalancer
+# ports:
+# - port: 80
+#   name: http
+#   protocol: TCP
+#   targetPort: 8080
+# - port: 443
+#   name: https
+#   protocol: TCP
+#   targetPort: 8443
+# selector:
+#   app: contour
+# type: LoadBalancer
+  selector:
+    app: contour
+  ports:
+  - name: http
+    nodePort: 30900
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  - name: https
+    nodePort: 30943
+    port: 443
+    protocol: TCP
+    targetPort: 443
+  sessionAffinity: None
+  type: NodePort
