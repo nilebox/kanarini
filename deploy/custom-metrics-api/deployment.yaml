@@ -26,7 +26,7 @@ spec:
         - --tls-cert-file=/var/run/serving-cert/serving.crt
         - --tls-private-key-file=/var/run/serving-cert/serving.key
         - --logtostderr=true
-        - --prometheus-url=http://prometheus-k8s.monitoring.svc:9090/
+        - --prometheus-url=http://prometheus-operated.monitoring.svc:9090/
         - --metrics-relist-interval=30s
         - --rate-interval=5m
         - --v=10

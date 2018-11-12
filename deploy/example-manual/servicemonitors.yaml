@@ -1,0 +1,16 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    prometheus: default
+  name: prometheus-example
+  namespace: example-manual
+spec:
+  endpoints:
+  - honorLabels: true
+    port: metrics
+    path: /metrics
+  selector:
+    matchLabels:
+      app: example

@@ -29,6 +29,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: cm-adapter-serving-certs
+  namespace: monitoring
 data:
   serving.crt: $(base64 ${b64_opts} < apiserver.pem)
   serving.key: $(base64 ${b64_opts} < apiserver-key.pem)

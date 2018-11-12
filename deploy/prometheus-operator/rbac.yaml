@@ -1,3 +1,4 @@
+### Prometheus Operator RBAC
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -77,5 +78,37 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-operator
+  namespace: monitoring
+
+### Prometheus instance RBAC
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
   namespace: monitoring
 

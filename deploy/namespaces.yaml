@@ -8,6 +8,8 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: example-manual
+  labels:
+      monitored: "true"
 ---
 apiVersion: v1
 kind: Namespace
