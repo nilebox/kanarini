@@ -2,25 +2,25 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: example-canary
-  namespace: example-manual
+  name: emoji-canary
+  namespace: kanarini-example
   labels:
-    app: example
+    app: emoji
     track: canary
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: example
+      app: emoji
       track: canary
   template:
     metadata:
       labels:
-        app: example
+        app: emoji
         track: canary
     spec:
       containers:
-      - name: example
+      - name: emoji
         image: nilebox/kanarini-example:0.0.0-beb8d1d
         args:
         - --error-rate
@@ -50,25 +50,25 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: example-stable
-  namespace: example-manual
+  name: emoji-stable
+  namespace: kanarini-example
   labels:
-    app: example
+    app: emoji
     track: stable
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: example
+      app: emoji
       track: stable
   template:
     metadata:
       labels:
-        app: example
+        app: emoji
         track: stable
     spec:
       containers:
-      - name: example
+      - name: emoji
         image: nilebox/kanarini-example:0.0.0-beb8d1d
         args:
         - --error-rate

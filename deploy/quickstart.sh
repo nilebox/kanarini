@@ -71,9 +71,9 @@ echo "Installing Custom Metrics API Server into cluster"
 
 echo "-----------------------------------------------------------------------"
 
-# Install manual example
-echo "Installing manual example into cluster"
-kubectl apply -f ./example-manual
+# Install kanarini example app
+echo "Installing example app into cluster"
+kubectl apply -f ./kanarini-example
 
 echo "-----------------------------------------------------------------------"
 # Test that Ingress with load balancing works

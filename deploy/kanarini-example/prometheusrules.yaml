@@ -2,8 +2,8 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: prometheus-example-rules
-  namespace: example-manual
+  name: emoji
+  namespace: kanarini-example
   labels:
     prometheus: default
 spec:

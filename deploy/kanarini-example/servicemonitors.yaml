@@ -4,8 +4,8 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: default
-  name: prometheus-example
-  namespace: example-manual
+  name: emoji
+  namespace: kanarini-example
 spec:
   endpoints:
   - honorLabels: true
@@ -13,4 +13,4 @@ spec:
     path: /metrics
   selector:
     matchLabels:
-      app: example
+      app: emoji

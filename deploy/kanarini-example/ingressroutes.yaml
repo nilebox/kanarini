@@ -1,17 +1,17 @@
 apiVersion: contour.heptio.com/v1beta1
 kind: IngressRoute
 metadata:
-  name: example-ingress
-  namespace: example-manual
+  name: emoji
+  namespace: kanarini-example
 spec:
   virtualhost:
     fqdn: example.com
   routes:
     - match: /
       services:
-        - name: example-canary
+        - name: emoji-canary
           port: 80
           weight: 50
-        - name: example-stable
+        - name: emoji-stable
           port: 80
           weight: 50
