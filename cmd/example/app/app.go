@@ -74,7 +74,8 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	middleware.Register(a.PrometheusRegistry)
 	router.Use(middleware.MonitorRequest)
-	router.Handle("/", a.handler())
+	router.Handle("/", http.HandlerFunc(a.indexHandler))
+	router.Handle("/emoji", http.HandlerFunc(a.emojiHandler))
 
 	// Auxiliary server
 	auxServer := app_util.AuxServer{
@@ -106,10 +107,6 @@ func (a *App) Run(ctx context.Context) error {
 
 	wg.Wait()
 	return nil
-}
-
-func (a *App) handler() http.Handler {
-	return http.HandlerFunc(a.indexHandler)
 }
 
 func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,8 +144,10 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			</style>
 			<script language="javascript">
-				setTimeout(function(){
-					window.location.reload(1);
+                setInterval(function(){
+					url = "/emoji"
+					fetch(url)
+						.then(data=>{console.log(data)})
 				}, 1000);
 			</script>
 		</head>
@@ -165,6 +164,14 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 		a.getBackgroundColor(emotion),
 		a.generateEmoji(emotion))
 	w.Write([]byte(html))
+}
+
+func (a *App) emojiHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	emotion := a.generateEmotion()
+	status := a.getResponseCode(emotion)
+	w.WriteHeader(status)
+	w.Write([]byte(a.generateEmoji(emotion)))
 }
 
 func (a *App) getResponseCode(emotion Emotion) int {
