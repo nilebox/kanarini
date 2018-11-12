@@ -4,5 +4,5 @@ type Emotion string
 
 const (
 	EmotionHappy Emotion = "Happy"
-	EmotionSad Emotion = "Sad"
+	EmotionSad   Emotion = "Sad"
 )

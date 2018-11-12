@@ -1,8 +1,9 @@
 package controller
 
 import (
-	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
 	"math"
+
+	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -16,7 +17,6 @@ const (
 	FailedDeploymentCreateReason = "DeploymentCreateError"
 	// NewDeploymentReason is added in a canary deployment when it creates a new deployment.
 	NewDeploymentReason = "NewDeploymentCreated"
-
 
 	// Reasons for deployment conditions
 	//

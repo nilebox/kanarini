@@ -1,17 +1,18 @@
 package controller
 
 import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/golang/glog"
 	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
-	apps "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/controller"
 	labelsutil "github.com/nilebox/kanarini/pkg/kubernetes/pkg/util/labels"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"fmt"
 	"github.com/pkg/errors"
-	"github.com/golang/glog"
-	"encoding/json"
+	apps "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // rolloutRolling implements the logic for rolling a new replica set.
@@ -113,10 +114,10 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 			Labels:          newDeploymentTemplate.Labels,
 		},
 		Spec: apps.DeploymentSpec{
-			Template: newDeploymentTemplate,
-			Replicas: trackSpec.Replicas,
-			Selector: cd.Spec.Selector,
-			MinReadySeconds: cd.Spec.MinReadySeconds,
+			Template:                newDeploymentTemplate,
+			Replicas:                trackSpec.Replicas,
+			Selector:                cd.Spec.Selector,
+			MinReadySeconds:         cd.Spec.MinReadySeconds,
 			ProgressDeadlineSeconds: cd.Spec.ProgressDeadlineSeconds,
 		},
 	}
@@ -206,7 +207,7 @@ func (c *CanaryDeploymentController) createTrackService(cd *kanarini.CanaryDeplo
 			Namespace:       cd.Namespace,
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(cd, kanarini.CanaryDeploymentGVK)},
 			Labels:          newServiceObjectMeta.Labels,
-			Annotations: newServiceObjectMeta.Annotations,
+			Annotations:     newServiceObjectMeta.Annotations,
 		},
 		// TODO: modify selector labels to include "canary"/"stable" tracks
 		Spec: newServiceSpec,

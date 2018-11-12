@@ -1,8 +1,8 @@
 package app
 
 import (
-	"time"
 	"flag"
+	"time"
 )
 
 const (

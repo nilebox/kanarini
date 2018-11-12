@@ -1,12 +1,13 @@
 package app
 
 import (
+	"flag"
+
 	"github.com/pkg/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/flowcontrol"
-	"flag"
 )
 
 type RestClientOptions struct {

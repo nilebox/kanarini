@@ -15,6 +15,8 @@ import (
 	"github.com/nilebox/kanarini/pkg/util/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"encoding/json"
+	"github.com/golang/glog"
 )
 
 const (
@@ -75,7 +77,7 @@ func (a *App) Run(ctx context.Context) error {
 	middleware.Register(a.PrometheusRegistry)
 	router.Use(middleware.MonitorRequest)
 	router.Handle("/", http.HandlerFunc(a.indexHandler))
-	router.Handle("/emoji", http.HandlerFunc(a.emojiHandler))
+	router.Handle("/info", http.HandlerFunc(a.infoHandler))
 
 	// Auxiliary server
 	auxServer := app_util.AuxServer{
@@ -145,7 +147,7 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 			</style>
 			<script language="javascript">
                 setInterval(function(){
-					url = "/emoji"
+					url = "/info"
 					fetch(url)
 						.then(response=>response.text())
 						.then(data=>{console.log(data)})
@@ -167,12 +169,26 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(html))
 }
 
-func (a *App) emojiHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
+func (a *App) infoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	emotion := a.generateEmotion()
+
+	info := Info{
+		Version: "1.0",
+		Emoji: a.generateEmoji(emotion),
+		Color: a.getBackgroundColor(emotion),
+	}
+	bytes, err := json.Marshal(&info)
+	if err != nil {
+		glog.Errorf("failed to marshal response: %#v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	status := a.getResponseCode(emotion)
 	w.WriteHeader(status)
-	w.Write([]byte(a.generateEmoji(emotion)))
+	w.Write(bytes)
 }
 
 func (a *App) getResponseCode(emotion Emotion) int {
@@ -221,5 +237,3 @@ func (a *App) generateEmotion() Emotion {
 		return EmotionSad
 	}
 }
-
-

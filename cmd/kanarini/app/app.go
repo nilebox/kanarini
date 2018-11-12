@@ -5,20 +5,20 @@ import (
 	"flag"
 	"time"
 
-	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	kanariniclientset "github.com/nilebox/kanarini/pkg/client/clientset_generated/clientset"
 	kanariniclientset_typed "github.com/nilebox/kanarini/pkg/client/clientset_generated/clientset/typed/kanarini/v1alpha1"
 	kanariniinformers "github.com/nilebox/kanarini/pkg/client/informers_generated/externalversions"
 	"github.com/nilebox/kanarini/pkg/controller"
+	"github.com/nilebox/kanarini/pkg/metrics"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/wait"
+	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"github.com/nilebox/kanarini/pkg/metrics"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/metrics/pkg/client/custom_metrics"
 	"k8s.io/metrics/pkg/client/external_metrics"
-	"k8s.io/client-go/restmapper"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type App struct {
@@ -93,7 +93,7 @@ func (a *App) Run(ctx context.Context) error {
 	// information is *at most* two resync intervals old.
 	go custom_metrics.PeriodicallyInvalidate(
 		apiVersionsGetter,
-		45 * time.Second, // TODO: make configurable
+		45*time.Second, // TODO: make configurable
 		ctx.Done())
 
 	metricsClient := metrics.NewRESTMetricsClient(

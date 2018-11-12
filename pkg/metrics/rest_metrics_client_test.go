@@ -22,6 +22,7 @@ import (
 	"time"
 
 	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta/testrestmapper"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -29,14 +30,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	core "k8s.io/client-go/testing"
 	"k8s.io/client-go/kubernetes/scheme"
+	core "k8s.io/client-go/testing"
 	cmapi "k8s.io/metrics/pkg/apis/custom_metrics/v1beta2"
 	emapi "k8s.io/metrics/pkg/apis/external_metrics/v1beta1"
 	cmfake "k8s.io/metrics/pkg/client/custom_metrics/fake"
 	emfake "k8s.io/metrics/pkg/client/external_metrics/fake"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // metricInfo contains pod metric value (the metric values are expected to be the metric as a milli-value)

@@ -20,8 +20,6 @@ func CloneAndAddLabel(labels map[string]string, labelKey, labelValue string) map
 	return newLabels
 }
 
-
-
 // CloneAndRemoveLabel clones the given map and returns a new map with the given key removed.
 // Returns the given map, if labelKey is empty.
 func CloneAndRemoveLabel(labels map[string]string, labelKey string) map[string]string {

@@ -1,11 +1,11 @@
 package app
 
 import (
+	"flag"
 	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"flag"
 )
 
 type LoggerOptions struct {

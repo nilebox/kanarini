@@ -10,6 +10,8 @@ import (
 	informers "github.com/nilebox/kanarini/pkg/client/informers_generated/externalversions/kanarini/v1alpha1"
 	listers "github.com/nilebox/kanarini/pkg/client/listers_generated/kanarini/v1alpha1"
 	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/controller"
+	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/util/metrics"
+	metricsclient "github.com/nilebox/kanarini/pkg/metrics"
 	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,8 +30,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/util/metrics"
-	metricsclient "github.com/nilebox/kanarini/pkg/metrics"
 )
 
 const (
@@ -49,7 +49,7 @@ var canaryDeploymentKind = kanarini.CanaryDeploymentGVK
 type CanaryDeploymentController struct {
 	kubeClient     kubernetes.Interface
 	kanariniClient kanariniclientset.KanariniV1alpha1Interface
-	metricsClient                 metricsclient.MetricsClient
+	metricsClient  metricsclient.MetricsClient
 
 	// To allow injection of syncDeployment for testing.
 	syncHandler func(dKey string) error
@@ -82,7 +82,7 @@ type CanaryDeploymentController struct {
 func NewController(
 	kubeClient kubernetes.Interface,
 	kanariniClient kanariniclientset.KanariniV1alpha1Interface,
-	metricsClient                 metricsclient.MetricsClient,
+	metricsClient metricsclient.MetricsClient,
 	cdInformer informers.CanaryDeploymentInformer,
 	dInformer appsinformers.DeploymentInformer,
 	sInformer coreinformers.ServiceInformer,
@@ -114,7 +114,7 @@ func NewController(
 	cdc := &CanaryDeploymentController{
 		kubeClient:     kubeClient,
 		kanariniClient: kanariniClient,
-		metricsClient: metricsClient,
+		metricsClient:  metricsClient,
 		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "canary-deployment"),
 		eventRecorder:  eventBroadcaster.NewRecorder(eventsScheme, v1.EventSource{Component: "canary-deployment-cdc"}),
 	}

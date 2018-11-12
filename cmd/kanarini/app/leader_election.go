@@ -2,16 +2,17 @@ package app
 
 import (
 	"context"
+	"flag"
 	"os"
 	"time"
+
+	"github.com/nilebox/kanarini/pkg/util/logz"
 	"go.uber.org/zap"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	core_v1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
-	"flag"
-	"github.com/nilebox/kanarini/pkg/util/logz"
 )
 
 const (
