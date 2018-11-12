@@ -11,7 +11,7 @@ spec:
       services:
         - name: example-canary
           port: 80
-          weight: 95
+          weight: 50
         - name: example-stable
           port: 80
-          weight: 5
+          weight: 50

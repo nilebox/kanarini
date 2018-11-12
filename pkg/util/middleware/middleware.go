@@ -30,6 +30,11 @@ func Register(registerer prometheus.Registerer) {
 
 func MonitorRequest(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
+		if r.URL != nil && r.URL.String() == "/favicon.ico" {
+			// Don't instrument favicon requests
+			next.ServeHTTP(w, r)
+			return
+		}
 		delegate := &ResponseWriterDelegator{ResponseWriter: w}
 		next.ServeHTTP(delegate, r)
 		requestCounter.WithLabelValues(codeToResult(delegate)).Inc()

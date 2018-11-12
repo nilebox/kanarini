@@ -205,7 +205,7 @@ func (a *App) getRandomItem(items []string) string {
 }
 
 func (a *App) generateEmotion() Emotion {
-	num := float64(rand.Intn(101))
+	num := float64(rand.Intn(100) + 1)
 	target := a.ErrorRate * 100
 	if num > target {
 		return EmotionHappy
