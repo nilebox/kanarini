@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: example
-        image: nilebox/kanarini-example:0.0.0-0d39457
+        image: nilebox/kanarini-example:0.0.0-beb8d1d
         args:
         - --error-rate
         - "1.0"
@@ -69,10 +69,10 @@ spec:
     spec:
       containers:
       - name: example
-        image: nilebox/kanarini-example:0.0.0-0d39457
+        image: nilebox/kanarini-example:0.0.0-beb8d1d
         args:
         - --error-rate
-        - "0.1"
+        - "0.0"
         ports:
         - containerPort: 8080
           name: http
