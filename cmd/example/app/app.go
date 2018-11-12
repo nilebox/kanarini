@@ -117,7 +117,7 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 	status := a.getResponseCode(emotion)
 	w.WriteHeader(status)
 
-	html := fmt.Sprintf(`
+	html := `
 	<!DOCTYPE html>
 	<html>
 		<head>
@@ -127,7 +127,6 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 				body {
  					font-size: 300px;
 					text-align: center;
-					background-color: %s;
 				}
 				.outer {
   					display: table;
@@ -163,14 +162,13 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 			<div class="outer">
 				<div class="middle">
 					<div class="inner">
-						%s
+						<div id="version">{version}</div>
+						<div id="emoji">{emoji}</div>
 					</div>
 				</div>
 			</div>
 		</body>
-	</html>`,
-		a.getBackgroundColor(emotion),
-		a.generateEmoji(emotion))
+	</html>`
 	w.Write([]byte(html))
 }
 
