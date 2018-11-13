@@ -22,11 +22,9 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
-	coreinformers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	appslisters "k8s.io/client-go/listers/apps/v1"
-	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -60,8 +58,6 @@ type CanaryDeploymentController struct {
 	cdLister listers.CanaryDeploymentLister
 	// dLister can list/get deployments from the shared informer's store
 	dLister appslisters.DeploymentLister
-	// sLister can list/get services from the shared informer's store
-	sLister corelisters.ServiceLister
 
 	// cdListerSynced returns true if the CanaryDeployment store has been synced at least once.
 	// Added as a member to the struct to allow injection for testing.
@@ -69,9 +65,6 @@ type CanaryDeploymentController struct {
 	// dListerSynced returns true if the Deployment store has been synced at least once.
 	// Added as a member to the struct to allow injection for testing.
 	dListerSynced cache.InformerSynced
-	// sListerSynced returns true if the Service store has been synced at least once.
-	// Added as a member to the struct to allow injection for testing.
-	sListerSynced cache.InformerSynced
 
 	// CanaryDeployments that need to be synced
 	queue         workqueue.RateLimitingInterface
@@ -85,7 +78,6 @@ func NewController(
 	metricsClient metricsclient.MetricsClient,
 	cdInformer informers.CanaryDeploymentInformer,
 	dInformer appsinformers.DeploymentInformer,
-	sInformer coreinformers.ServiceInformer,
 ) (*CanaryDeploymentController, error) {
 	// Create Event broadcaster
 	eventBroadcaster := record.NewBroadcaster()
@@ -130,10 +122,8 @@ func NewController(
 
 	cdc.cdLister = cdInformer.Lister()
 	cdc.dLister = dInformer.Lister()
-	cdc.sLister = sInformer.Lister()
 	cdc.cdListerSynced = cdInformer.Informer().HasSynced
 	cdc.dListerSynced = dInformer.Informer().HasSynced
-	cdc.sListerSynced = sInformer.Informer().HasSynced
 	return cdc, nil
 }
 
@@ -145,7 +135,7 @@ func (c *CanaryDeploymentController) Run(workers int, stopCh <-chan struct{}) {
 	glog.Info("Starting deployment controller")
 	defer glog.Info("Shutting down deployment controller")
 
-	if !controller.WaitForCacheSync("canary-deployment", stopCh, c.cdListerSynced, c.dListerSynced, c.sListerSynced) {
+	if !controller.WaitForCacheSync("canary-deployment", stopCh, c.cdListerSynced, c.dListerSynced) {
 		return
 	}
 
@@ -285,16 +275,11 @@ func (c *CanaryDeploymentController) syncDeployment(key string) error {
 	if err != nil {
 		return err
 	}
-	// List Services owned by this CanaryDeployment
-	sList, err := c.getServicesForCanaryDeployment(cd)
-	if err != nil {
-		return err
-	}
 	if cd.DeletionTimestamp != nil {
-		return c.syncStatusOnly(cd, dList, sList)
+		return c.syncStatusOnly(cd, dList)
 	}
 
-	return c.rolloutCanary(cd, dList, sList)
+	return c.rolloutCanary(cd, dList)
 }
 
 // getDeploymentsForCanaryDeployment returns the list of Deployments that this CanaryDeployment should manage.
@@ -307,30 +292,6 @@ func (c *CanaryDeploymentController) getDeploymentsForCanaryDeployment(cd *kanar
 
 	var claimed []*apps.Deployment
 	for _, d := range dList {
-		controllerRef := metav1.GetControllerOf(d)
-		if controllerRef == nil {
-			// Orphaned. Ignore.
-			continue
-		}
-		if controllerRef.UID != cd.GetUID() {
-			// Owned by someone else. Ignore.
-			continue
-		}
-		claimed = append(claimed, d)
-	}
-	return claimed, nil
-}
-
-// getServicesForCanaryDeployment returns the list of Services that this CanaryDeployment should manage.
-func (c *CanaryDeploymentController) getServicesForCanaryDeployment(cd *kanarini.CanaryDeployment) ([]*corev1.Service, error) {
-	// List all Services to find those we own
-	sList, err := c.sLister.Services(cd.Namespace).List(labels.Everything())
-	if err != nil {
-		return nil, err
-	}
-
-	var claimed []*corev1.Service
-	for _, d := range sList {
 		controllerRef := metav1.GetControllerOf(d)
 		if controllerRef == nil {
 			// Orphaned. Ignore.

@@ -41,7 +41,6 @@ type CanaryDeployment struct {
 
 const (
 	PodTemplateHashLabelKey     string = kanarini.GroupName + "/pod-template-hash"
-	ServiceTemplateHashLabelKey string = kanarini.GroupName + "/service-template-hash"
 )
 
 type CanaryDeploymentSpec struct {
@@ -49,36 +48,36 @@ type CanaryDeploymentSpec struct {
 	// Label selector for pods. Existing ReplicaSets whose pods are
 	// selected by this will be the ones affected by this deployment.
 	// It must match the pod template's labels.
-	Selector *metav1.LabelSelector `json:"selector" protobuf:"bytes,2,opt,name=selector"`
+	Selector *metav1.LabelSelector `json:"selector"`
 
-	PodTemplate     corev1.PodTemplateSpec `json:"podTemplate"`
-	ServiceTemplate ServiceTemplateSpec    `json:"serviceTemplate"`
+	// Template describes the pods that will be created.
+	Template corev1.PodTemplateSpec `json:"template"`
 	Tracks          CanaryDeploymentTracks `json:"tracks"`
 
 	// Minimum number of seconds for which a newly created pod should be ready
 	// without any of its container crashing, for it to be considered available.
 	// Defaults to 0 (pod will be considered available as soon as it is ready)
 	// +optional
-	MinReadySeconds int32 `json:"minReadySeconds,omitempty" protobuf:"varint,5,opt,name=minReadySeconds"`
+	MinReadySeconds int32 `json:"minReadySeconds,omitempty"`
 
 	// The maximum time in seconds for a deployment to make progress before it
 	// is considered to be failed. The deployment controller will continue to
 	// process failed deployments and a condition with a ProgressDeadlineExceeded
 	// reason will be surfaced in the deployment status. Note that progress will
 	// not be estimated during the time a deployment is paused. Defaults to 600s.
-	ProgressDeadlineSeconds *int32 `json:"progressDeadlineSeconds,omitempty" protobuf:"varint,9,opt,name=progressDeadlineSeconds"`
+	ProgressDeadlineSeconds *int32 `json:"progressDeadlineSeconds,omitempty"`
 }
 
 // DeploymentStatus is the most recently observed status of the CanaryDeployment.
 type CanaryDeploymentStatus struct {
 	// The generation observed by the deployment controller.
 	// +optional
-	ObservedGeneration int64 `json:"observedGeneration,omitempty" protobuf:"varint,1,opt,name=observedGeneration"`
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
 	// Represents the latest available observations of a deployment's current state.
 	// +patchMergeKey=type
 	// +patchStrategy=merge
-	Conditions []CanaryDeploymentCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,6,rep,name=conditions"`
+	Conditions []CanaryDeploymentCondition `json:"conditions,omitempty"`
 }
 
 type CanaryDeploymentConditionType string
@@ -101,30 +100,17 @@ const (
 // CanaryDeploymentCondition describes the state of a deployment at a certain point.
 type CanaryDeploymentCondition struct {
 	// Type of deployment condition.
-	Type CanaryDeploymentConditionType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=CanaryDeploymentConditionType"`
+	Type CanaryDeploymentConditionType `json:"type"`
 	// Status of the condition, one of True, False, Unknown.
-	Status corev1.ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status,casttype=k8s.io/api/core/v1.ConditionStatus"`
+	Status corev1.ConditionStatus `json:"status"`
 	// The last time this condition was updated.
-	LastUpdateTime metav1.Time `json:"lastUpdateTime,omitempty" protobuf:"bytes,6,opt,name=lastUpdateTime"`
+	LastUpdateTime metav1.Time `json:"lastUpdateTime,omitempty"`
 	// Last time the condition transitioned from one status to another.
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,7,opt,name=lastTransitionTime"`
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 	// The reason for the condition's last transition.
-	Reason string `json:"reason,omitempty" protobuf:"bytes,4,opt,name=reason"`
+	Reason string `json:"reason,omitempty"`
 	// A human readable message indicating details about the transition.
-	Message string `json:"message,omitempty" protobuf:"bytes,5,opt,name=message"`
-}
-
-// ServiceTemplateSpec describes the data a service should have when created from a template
-type ServiceTemplateSpec struct {
-	// Standard object's metadata.
-	// More info: https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// Specification of the desired behavior of the service.
-	// More info: https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#spec-and-status
-	// +optional
-	Spec corev1.ServiceSpec `json:"spec,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 type CanaryDeploymentTracks struct {
@@ -138,13 +124,13 @@ type DeploymentTrackSpec struct {
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
 
-	// Specifies the name of the referenced service.
-	ServiceName string `json:"serviceName" protobuf:"bytes,1,opt,name=serviceName"`
+	// Labels to add to pods to distinguish between tracks
+	Labels map[string]string `json:"labels,omitempty"`
 
 	// Metrics contains the specifications for which to use to determine whether
 	// the service is healthy.
 	// +optional
-	Metrics []MetricSpec `json:"metrics,omitempty" protobuf:"bytes,4,rep,name=metrics"`
+	Metrics []MetricSpec `json:"metrics,omitempty"`
 }
 
 // MetricSpec specifies how to scale based on a single metric
@@ -152,12 +138,12 @@ type DeploymentTrackSpec struct {
 type MetricSpec struct {
 	// type is the type of metric source.  It should be one of "Object"
 	// or "External", each mapping to a matching field in the object.
-	Type MetricSourceType `json:"type" protobuf:"bytes,1,name=type"`
+	Type MetricSourceType `json:"type"`
 
 	// object refers to a metric describing a single kubernetes object
 	// (for example, hits-per-second on an Ingress object).
 	// +optional
-	Object *ObjectMetricSource `json:"object,omitempty" protobuf:"bytes,2,opt,name=object"`
+	Object *ObjectMetricSource `json:"object,omitempty"`
 
 	// External refers to a global metric that is not associated
 	// with any Kubernetes object. It allows making decision based on information
@@ -186,11 +172,11 @@ var (
 // ObjectMetricSource indicates how to scale on a metric describing a
 // kubernetes object (for example, hits-per-second on an Ingress object).
 type ObjectMetricSource struct {
-	DescribedObject CrossVersionObjectReference `json:"describedObject" protobuf:"bytes,1,name=describedObject"`
+	DescribedObject CrossVersionObjectReference `json:"describedObject"`
 	// target specifies the target value for the given metric
-	Target MetricTarget `json:"target" protobuf:"bytes,2,name=target"`
+	Target MetricTarget `json:"target"`
 	// metric identifies the target metric by name and selector
-	Metric MetricIdentifier `json:"metric" protobuf:"bytes,3,name=metric"`
+	Metric MetricIdentifier `json:"metric"`
 }
 
 // ExternalMetricSource indicates how to scale on a metric not associated with
@@ -206,21 +192,21 @@ type ExternalMetricSource struct {
 // CrossVersionObjectReference contains enough information to let you identify the referred resource.
 type CrossVersionObjectReference struct {
 	// Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds"
-	Kind string `json:"kind" protobuf:"bytes,1,opt,name=kind"`
+	Kind string `json:"kind"`
 	// Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names
-	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
+	Name string `json:"name"`
 	// API version of the referent
 	// +optional
-	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,3,opt,name=apiVersion"`
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 // MetricTarget defines the target value of a specific metric
 type MetricTarget struct {
 	// type represents the metric type
-	Type MetricTargetType `json:"type" protobuf:"bytes,1,name=type"`
+	Type MetricTargetType `json:"type"`
 	// value is the target value of the metric (as a quantity).
 	// +optional
-	Value *resource.Quantity `json:"value,omitempty" protobuf:"bytes,2,opt,name=value"`
+	Value *resource.Quantity `json:"value,omitempty"`
 }
 
 // MetricTargetType specifies the type of metric being targeted, only
@@ -235,12 +221,12 @@ var (
 // MetricIdentifier defines the name and optionally selector for a metric
 type MetricIdentifier struct {
 	// name is the name of the given metric
-	Name string `json:"name" protobuf:"bytes,1,name=name"`
+	Name string `json:"name"`
 	// selector is the string-encoded form of a standard kubernetes label selector for the given metric
 	// When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping.
 	// When unset, just the metricName will be used to gather metrics.
 	// +optional
-	Selector *metav1.LabelSelector `json:"selector,omitempty" protobuf:"bytes,2,name=selector"`
+	Selector *metav1.LabelSelector `json:"selector,omitempty"`
 }
 
 type CanaryDeploymentTrackName string

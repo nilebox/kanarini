@@ -74,7 +74,6 @@ func (a *App) Run(ctx context.Context) error {
 		a.ResyncPeriod,
 	)
 	appsSharedInformers := coreInformerFactory.Apps().V1()
-	coreSharedInformers := coreInformerFactory.Core().V1()
 
 	kanariniClientset, err := kanariniclientset.NewForConfig(a.RestConfig)
 	if err != nil {
@@ -111,9 +110,8 @@ func (a *App) Run(ctx context.Context) error {
 	// Informers
 	canaryDeploymentInf := kanariniSharedInformers.CanaryDeployments()
 	deploymentInf := appsSharedInformers.Deployments()
-	serviceInf := coreSharedInformers.Services()
 
-	c, err := controller.NewController(a.MainClient, kanariniClient, metricsClient, canaryDeploymentInf, deploymentInf, serviceInf)
+	c, err := controller.NewController(a.MainClient, kanariniClient, metricsClient, canaryDeploymentInf, deploymentInf)
 
 	kanariniInformerFactory.Start(ctx.Done())
 	coreInformerFactory.Start(ctx.Done())

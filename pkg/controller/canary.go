@@ -7,16 +7,16 @@ import (
 	"github.com/golang/glog"
 	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
 	"github.com/nilebox/kanarini/pkg/kubernetes/pkg/controller"
-	labelsutil "github.com/nilebox/kanarini/pkg/kubernetes/pkg/util/labels"
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 // rolloutRolling implements the logic for rolling a new replica set.
-func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment, dList []*apps.Deployment, sList []*corev1.Service) error {
+func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment, dList []*apps.Deployment) error {
 	cdBytes, _ := json.Marshal(cd)
 	glog.V(4).Infof("CanaryDeployment: %v", string(cdBytes))
 
@@ -31,13 +31,9 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		return errors.New("Canary track deployment is not ready")
 	}
 	glog.V(4).Info("Canary track deployment is ready!")
-	// Create a canary Service
-	_, err = c.createTrackService(cd, sList, &cd.Spec.Tracks.Canary, kanarini.CanaryTrackName)
-	if err != nil {
-		return err
-	}
 	// Wait for metric delay to expire
 	// TODO wait for metric delay to expire
+	time.Sleep(30*time.Second)
 	// Check the metric value and decide whether Service is healthy
 	healthy, err := c.isServiceHealthy(cd, &cd.Spec.Tracks.Canary)
 	if err != nil {
@@ -45,6 +41,8 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	}
 	if !healthy {
 		// TODO rollback canary deployment and don't proceed for stable deployment
+		glog.V(4).Info("Canary track deployment is not healthy. Stopping propagation")
+		return nil
 	}
 	// Create a stable track deployment
 	stableTrackDeployment, err := c.createTrackDeployment(cd, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
@@ -55,11 +53,6 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		return errors.New("Stable track deployment is not ready")
 	}
 	glog.V(4).Info("Stable track deployment is ready!")
-	// Create a stable Service
-	_, err = c.createTrackService(cd, sList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
-	if err != nil {
-		return err
-	}
 	// Done
 	return nil
 }
@@ -76,6 +69,10 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 			val, _, err := c.metricsClient.GetObjectMetric(metricSpec.Object.Metric.Name, cd.Namespace, &metricSpec.Object.DescribedObject, metricSelector)
 			glog.V(4).Infof("Custom metric value: %v", val)
 			metricVal = val
+			// If metric value is equal or greater than target value, it's considered unhealthy
+			if metricVal >= metricSpec.Object.Target.Value.MilliValue() {
+				return false, nil
+			}
 		case kanarini.ExternalMetricSourceType:
 			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.External.Metric.Selector)
 			if err != nil {
@@ -87,13 +84,12 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 				sum = sum + val
 			}
 			metricVal = sum
+			// If metric value is equal or greater than target value, it's considered unhealthy
+			if metricVal >= metricSpec.External.Target.Value.MilliValue() {
+				return false, nil
+			}
 		default:
 			return false, errors.New(fmt.Sprintf("Unexpected metric source type: %v", metricSpec.Type))
-		}
-
-		// If metric value is equal or greater than target value, it's considered unhealthy
-		if metricVal >= metricSpec.External.Target.Value.MilliValue() {
-			return false, nil
 		}
 	}
 
@@ -101,10 +97,13 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 }
 
 func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, dList []*apps.Deployment, trackSpec *kanarini.DeploymentTrackSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
-	newDeploymentTemplate := *cd.Spec.PodTemplate.DeepCopy()
+	newDeploymentTemplate := *cd.Spec.Template.DeepCopy()
 	podTemplateSpecHash := controller.ComputeHash(&newDeploymentTemplate, nil)
-	newDeploymentTemplate.Labels = labelsutil.CloneAndAddLabel(newDeploymentTemplate.Labels, "track", string(trackName))
-	newDeploymentTemplate.Labels = labelsutil.CloneAndAddLabel(newDeploymentTemplate.Labels, kanarini.PodTemplateHashLabelKey, podTemplateSpecHash)
+	_ = podTemplateSpecHash // Useful for rollback implementation
+	labels := newDeploymentTemplate.Labels
+	for k, v := range trackSpec.Labels {
+		labels[k] = v
+	}
 	newDeployment := apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			// Make the name deterministic, to ensure idempotence
@@ -192,93 +191,4 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 		_, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
 	}
 	return createdDeployment, err
-}
-
-func (c *CanaryDeploymentController) createTrackService(cd *kanarini.CanaryDeployment, sList []*corev1.Service, trackSpec *kanarini.DeploymentTrackSpec, trackName kanarini.CanaryDeploymentTrackName) (*corev1.Service, error) {
-	newServiceObjectMeta := *cd.Spec.ServiceTemplate.ObjectMeta.DeepCopy()
-	newServiceSpec := *cd.Spec.ServiceTemplate.Spec.DeepCopy()
-	serviceSpecHash := controller.ComputeHash(&newServiceSpec, nil)
-	newServiceObjectMeta.Labels = labelsutil.CloneAndAddLabel(newServiceObjectMeta.Labels, "track", string(trackName))
-	newServiceObjectMeta.Labels = labelsutil.CloneAndAddLabel(newServiceObjectMeta.Labels, kanarini.ServiceTemplateHashLabelKey, serviceSpecHash)
-	newService := corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			// Make the name deterministic, to ensure idempotence
-			Name:            cd.Name + "-" + string(trackName),
-			Namespace:       cd.Namespace,
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(cd, kanarini.CanaryDeploymentGVK)},
-			Labels:          newServiceObjectMeta.Labels,
-			Annotations:     newServiceObjectMeta.Annotations,
-		},
-		// TODO: modify selector labels to include "canary"/"stable" tracks
-		Spec: newServiceSpec,
-	}
-
-	bytes, _ := json.Marshal(&newService)
-	glog.V(4).Infof("Service spec: %v", string(bytes))
-
-	// Create the new Service. If it already exists, then we need to check for possible
-	// conflicts. If there is any other error, we need to report it in the status of
-	// the CanaryDeployment.
-	alreadyExists := false
-	createdService, err := c.kubeClient.CoreV1().Services(cd.Namespace).Create(&newService)
-	switch {
-	// We may end up hitting this due to a slow cache or a fast resync of the Service.
-	case apierrors.IsAlreadyExists(err):
-		alreadyExists = true
-
-		// Fetch a copy of the Service.
-		s, sErr := c.sLister.Services(newService.Namespace).Get(newService.Name)
-		if sErr != nil {
-			return nil, sErr
-		}
-
-		controllerRef := metav1.GetControllerOf(s)
-		if controllerRef != nil && controllerRef.UID == cd.UID {
-			createdService = s
-			err = nil
-			if createdService.Labels[kanarini.ServiceTemplateHashLabelKey] != newService.Labels[kanarini.ServiceTemplateHashLabelKey] {
-				// Service template hashes are different; need to update the deployment
-				createdService := createdService.DeepCopy()
-				createdService.Labels = newService.Labels
-				createdService.Spec = newService.Spec
-				createdService, err = c.kubeClient.CoreV1().Services(cd.Namespace).Update(createdService)
-				if err != nil {
-					return nil, err
-				}
-			}
-			break
-		}
-
-		msg := fmt.Sprintf("New Service conflicts with existing one: %q", newService.Name)
-		if HasProgressDeadline(cd) {
-			cond := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentProgressing, corev1.ConditionFalse, FailedServiceCreateReason, msg)
-			SetCanaryDeploymentCondition(&cd.Status, *cond)
-			// We don't really care about this error at this point, since we have a bigger issue to report.
-			_, _ = c.kanariniClient.CanaryDeployments(cd.Namespace).Update(cd)
-		}
-		c.eventRecorder.Eventf(cd, corev1.EventTypeWarning, FailedServiceCreateReason, msg)
-		return nil, fmt.Errorf("new Service conflicts with existing one: %q", newService.Name)
-	case err != nil:
-		msg := fmt.Sprintf("Failed to create new Service %q: %v", newService.Name, err)
-		if HasProgressDeadline(cd) {
-			cond := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentProgressing, corev1.ConditionFalse, FailedServiceCreateReason, msg)
-			SetCanaryDeploymentCondition(&cd.Status, *cond)
-			// We don't really care about this error at this point, since we have a bigger issue to report.
-			_, _ = c.kanariniClient.CanaryDeployments(cd.Namespace).Update(cd)
-		}
-		c.eventRecorder.Eventf(cd, corev1.EventTypeWarning, FailedServiceCreateReason, msg)
-		return nil, err
-	}
-
-	needsUpdate := false
-	if !alreadyExists && HasProgressDeadline(cd) {
-		msg := fmt.Sprintf("Created new Service %q", createdService.Name)
-		condition := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentProgressing, corev1.ConditionTrue, NewServiceReason, msg)
-		SetCanaryDeploymentCondition(&cd.Status, *condition)
-		needsUpdate = true
-	}
-	if needsUpdate {
-		_, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
-	}
-	return createdService, err
 }

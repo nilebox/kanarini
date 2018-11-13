@@ -1,0 +1,61 @@
+---
+apiVersion: kanarini.nilebox.github.com/v1alpha1
+kind: CanaryDeployment
+metadata:
+  name: emoji
+  namespace: kanarini-demo
+spec:
+  template:
+    metadata:
+      labels:
+        app: emoji
+    spec:
+      containers:
+      - name: emoji
+        image: nilebox/kanarini-example:0.0.0-fe446dc
+        args:
+        - --error-rate
+        - "0.0"
+        - --version
+        - "3.0"
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+  tracks:
+    canary:
+      replicas: 1
+      labels:
+        track: canary
+      metrics:
+      - type: Object
+        object:
+          describedObject:
+            kind: "Service"
+            name: "emoji-canary"
+          metric:
+            name: "request_count:failure:rate5m"
+          target:
+            type: value
+            value: 500
+    stable:
+      replicas: 5
+      labels:
+        track: stable

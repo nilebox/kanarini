@@ -24,6 +24,12 @@ var (
 )
 
 func Register(registerer prometheus.Registerer) {
+	// Initialize metrics to zero to prevent missing metrics
+	// See https://www.robustperception.io/existential-issues-with-metrics
+	requestCounter.WithLabelValues(flagToResult(true))
+	requestCounter.WithLabelValues(flagToResult(false))
+	totalRequestCounter.WithLabelValues()
+
 	registerer.MustRegister(requestCounter)
 	registerer.MustRegister(totalRequestCounter)
 }
@@ -46,6 +52,13 @@ func MonitorRequest(next http.Handler) http.Handler {
 func codeToResult(r *ResponseWriterDelegator) string {
 	statusCode := r.status
 	if statusCode >= 200 && statusCode < 300 {
+		return flagToResult(true)
+	}
+	return flagToResult(false)
+}
+
+func flagToResult(success bool) string {
+	if success {
 		return "success"
 	}
 	return "failure"
