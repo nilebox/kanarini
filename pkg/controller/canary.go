@@ -33,7 +33,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	glog.V(4).Info("Canary track deployment is ready!")
 	// Wait for metric delay to expire
 	// TODO wait for metric delay to expire
-	time.Sleep(30*time.Second)
+	time.Sleep(2*time.Minute)
 	// Check the metric value and decide whether Service is healthy
 	healthy, err := c.isServiceHealthy(cd, &cd.Spec.Tracks.Canary)
 	if err != nil {
@@ -59,7 +59,6 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 
 func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeployment, trackSpec *kanarini.DeploymentTrackSpec) (bool, error) {
 	for _, metricSpec := range trackSpec.Metrics {
-		var metricVal int64 = 0
 		switch metricSpec.Type {
 		case kanarini.ObjectMetricSourceType:
 			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.Object.Metric.Selector)
@@ -68,9 +67,9 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 			}
 			val, _, err := c.metricsClient.GetObjectMetric(metricSpec.Object.Metric.Name, cd.Namespace, &metricSpec.Object.DescribedObject, metricSelector)
 			glog.V(4).Infof("Custom metric value: %v", val)
-			metricVal = val
+			glog.V(4).Infof("Custom metric target value: %v", metricSpec.Object.Target.Value.MilliValue())
 			// If metric value is equal or greater than target value, it's considered unhealthy
-			if metricVal >= metricSpec.Object.Target.Value.MilliValue() {
+			if val >= metricSpec.Object.Target.Value.MilliValue() {
 				return false, nil
 			}
 		case kanarini.ExternalMetricSourceType:
@@ -83,9 +82,8 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 			for _, val := range metrics {
 				sum = sum + val
 			}
-			metricVal = sum
 			// If metric value is equal or greater than target value, it's considered unhealthy
-			if metricVal >= metricSpec.External.Target.Value.MilliValue() {
+			if sum >= metricSpec.External.Target.Value.MilliValue() {
 				return false, nil
 			}
 		default:
@@ -98,9 +96,17 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 
 func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, dList []*apps.Deployment, trackSpec *kanarini.DeploymentTrackSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
 	newDeploymentTemplate := *cd.Spec.Template.DeepCopy()
-	podTemplateSpecHash := controller.ComputeHash(&newDeploymentTemplate, nil)
-	_ = podTemplateSpecHash // Useful for rollback implementation
+	templateHash := controller.ComputeHash(&newDeploymentTemplate, nil)
+	_ = templateHash // Useful for rollback implementation
+	annotations := newDeploymentTemplate.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[kanarini.TemplateHashAnnotationKey] = templateHash
 	labels := newDeploymentTemplate.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	for k, v := range trackSpec.Labels {
 		labels[k] = v
 	}
@@ -110,7 +116,8 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 			Name:            cd.Name + "-" + string(trackName),
 			Namespace:       cd.Namespace,
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(cd, kanarini.CanaryDeploymentGVK)},
-			Labels:          newDeploymentTemplate.Labels,
+			Annotations: annotations,
+			Labels:          labels,
 		},
 		Spec: apps.DeploymentSpec{
 			Template:                newDeploymentTemplate,
@@ -146,10 +153,10 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 			createdDeployment = d
 			err = nil
 			// TODO: also need to check contents to make sure that there were no manual changes to deployment
-			if createdDeployment.Labels[kanarini.PodTemplateHashLabelKey] != newDeployment.Labels[kanarini.PodTemplateHashLabelKey] {
+			if createdDeployment.Annotations[kanarini.TemplateHashAnnotationKey] != newDeployment.Annotations[kanarini.TemplateHashAnnotationKey] {
 				// Pod template hashes are different; need to update the deployment
 				createdDeployment := createdDeployment.DeepCopy()
-				createdDeployment.Labels = newDeployment.Labels
+				createdDeployment.Annotations = newDeployment.Annotations
 				createdDeployment.Spec = newDeployment.Spec
 				createdDeployment, err = c.kubeClient.AppsV1().Deployments(createdDeployment.Namespace).Update(createdDeployment)
 				if err != nil {

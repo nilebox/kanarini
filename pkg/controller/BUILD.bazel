@@ -17,7 +17,6 @@ go_library(
         "//pkg/client/informers_generated/externalversions/kanarini/v1alpha1:go_default_library",
         "//pkg/client/listers_generated/kanarini/v1alpha1:go_default_library",
         "//pkg/kubernetes/pkg/controller:go_default_library",
-        "//pkg/kubernetes/pkg/util/labels:go_default_library",
         "//pkg/kubernetes/pkg/util/metrics:go_default_library",
         "//pkg/metrics:go_default_library",
         "//vendor/github.com/golang/glog:go_default_library",

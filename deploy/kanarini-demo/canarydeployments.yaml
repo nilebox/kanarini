@@ -12,12 +12,12 @@ spec:
     spec:
       containers:
       - name: emoji
-        image: nilebox/kanarini-example:0.0.0-fe446dc
+        image: nilebox/kanarini-example:0.0.0-4e156e2
         args:
         - --error-rate
         - "0.0"
         - --version
-        - "3.0"
+        - "1.0"
         ports:
         - containerPort: 8080
           name: http
@@ -51,10 +51,10 @@ spec:
             kind: "Service"
             name: "emoji-canary"
           metric:
-            name: "request_count:failure:rate5m"
+            name: "request_count:failure:rate1m"
           target:
             type: value
-            value: 500
+            value: 0.1
     stable:
       replicas: 5
       labels:

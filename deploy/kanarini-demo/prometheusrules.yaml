@@ -11,5 +11,5 @@ spec:
   - name: example-rules
     rules:
     - expr: |
-        rate(request_count{result="failure"}[5m]) / ignoring(result) rate(request_count_total[5m])
-      record: request_count:failure:rate5m
+        rate(request_count{result="failure"}[1m]) / ignoring(result) rate(request_count_total[1m])
+      record: request_count:failure:rate1m
