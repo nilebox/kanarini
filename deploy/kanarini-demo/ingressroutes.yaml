@@ -2,7 +2,7 @@ apiVersion: contour.heptio.com/v1beta1
 kind: IngressRoute
 metadata:
   name: emoji
-  namespace: kanarini-example
+  namespace: kanarini-demo
 spec:
   virtualhost:
     fqdn: example.com

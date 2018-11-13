@@ -73,7 +73,7 @@ echo "-----------------------------------------------------------------------"
 
 # Install kanarini example app
 echo "Installing example app into cluster"
-kubectl apply -f ./kanarini-example
+kubectl apply -f ./kanarini-demo
 
 echo "-----------------------------------------------------------------------"
 # Test that Ingress with load balancing works

@@ -3,7 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: emoji
-  namespace: kanarini-example
+  namespace: kanarini-demo
   labels:
     prometheus: default
 spec:

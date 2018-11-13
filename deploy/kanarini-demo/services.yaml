@@ -3,7 +3,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: emoji-canary
-  namespace: kanarini-example
+  namespace: kanarini-demo
   labels:
     app: emoji
     track: canary
@@ -25,7 +25,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: emoji-stable
-  namespace: kanarini-example
+  namespace: kanarini-demo
   labels:
     app: emoji
     track: stable
@@ -60,7 +60,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: emoji-canary-public
-  namespace: kanarini-example
+  namespace: kanarini-demo
   labels:
     app: emoji
     track: canary
@@ -86,7 +86,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: emoji-stable-public
-  namespace: kanarini-example
+  namespace: kanarini-demo
   labels:
     app: emoji
     track: stable

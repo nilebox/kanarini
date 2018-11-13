@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	defaultVersion     = "0.0"
 	defaultErrorRate     = 0.5
 	defaultServerAddr    = ":8080"
 	defaultAuxServerAddr = ":9090"
@@ -29,6 +30,7 @@ type App struct {
 	Logger             *zap.Logger
 	PrometheusRegistry metric_util.PrometheusRegistry
 	ErrorRate          float64
+	Version            string
 
 	// Address to listen on
 	// Defaults to port 8080
@@ -50,6 +52,7 @@ func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
 	flagset.StringVar(&a.ServerAddr, "addr", defaultServerAddr, "Port to listen on")
 	flagset.StringVar(&a.AuxServerAddr, "aux-addr", defaultAuxServerAddr, "Auxiliary port to listen on")
 	flagset.Float64Var(&a.ErrorRate, "error-rate", defaultErrorRate, "Error rate for HTTP requests")
+	flagset.StringVar(&a.Version, "version", defaultVersion, "Version to return in the info")
 	flagset.BoolVar(&a.Debug, "debug", false, "Enable debug mode")
 
 	err := flagset.Parse(arguments)
@@ -174,7 +177,7 @@ func (a *App) infoHandler(w http.ResponseWriter, r *http.Request) {
 	emotion := a.generateEmotion()
 
 	info := Info{
-		Version: "1.0",
+		Version: a.Version,
 		Emoji: a.generateEmoji(emotion),
 		Color: a.getBackgroundColor(emotion),
 	}

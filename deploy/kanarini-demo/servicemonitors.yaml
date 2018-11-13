@@ -5,7 +5,7 @@ metadata:
   labels:
     prometheus: default
   name: emoji
-  namespace: kanarini-example
+  namespace: kanarini-demo
 spec:
   endpoints:
   - honorLabels: true
