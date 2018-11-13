@@ -79,7 +79,10 @@ func (a *App) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	kanariniClient := kanariniclientset_typed.New(kanariniClientset.RESTClient())
+	kanariniClient, err := kanariniclientset_typed.NewForConfig(a.RestConfig)
+	if err != nil {
+		return err
+	}
 
 	// Use a discovery client capable of being refreshed.
 	cachedClient := cacheddiscovery.NewMemCacheClient(a.MainClient.Discovery())

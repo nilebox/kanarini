@@ -21,5 +21,5 @@ spec:
       - name: kanarini
         image: nilebox/kanarini:0.0.0-4e156e2
         args:
-        - --v=6
+        - --v=4
         - --alsologtostderr

@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// rolloutRolling implements the logic for rolling a new replica set.
+// rolloutCanary implements the logic for a canary deployment.
 func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment, dList []*apps.Deployment) error {
 	cdBytes, _ := json.Marshal(cd)
 	glog.V(4).Infof("CanaryDeployment: %v", string(cdBytes))
@@ -27,55 +27,92 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	}
 	// Wait for a canary track deployment to succeed
 	if !IsReady(canaryTrackDeployment) {
-		// TODO exponential delay + watch on deployment objects
-		return errors.New("Canary track deployment is not ready")
+		glog.V(4).Info("Canary track deployment is not ready")
+		// We will get an event once Deployment object is updated
+		return nil
 	}
 	glog.V(4).Info("Canary track deployment is ready!")
 	// Wait for metric delay to expire
-	// TODO wait for metric delay to expire
-	time.Sleep(2*time.Minute)
-	// Check the metric value and decide whether Service is healthy
-	healthy, err := c.isServiceHealthy(cd, &cd.Spec.Tracks.Canary)
-	if err != nil {
-		return err
+	metricCheckDelay := time.Duration(cd.Spec.Tracks.Canary.MetricCheckDelaySeconds) * time.Second
+	if cd.Status.CanaryDeploymentReadyStatusCheckpoint == nil || canaryTrackDeployment.Annotations[kanarini.TemplateHashAnnotationKey] != cd.Status.CanaryDeploymentReadyStatusCheckpoint.TemplateHash {
+		glog.V(4).Info("Recording a ready status checkpoint")
+		cd.Status.CanaryDeploymentReadyStatusCheckpoint = &kanarini.DeploymentReadyStatusCheckpoint{
+			TemplateHash: canaryTrackDeployment.Annotations[kanarini.TemplateHashAnnotationKey],
+			LatestReadyTimestamp: metav1.Now(),
+		}
+		cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+		if err != nil {
+			glog.V(4).Infof("Failed to update CanaryDeployment status: %v", err)
+			return err
+		}
+		// Delay re-processing of deployment by configured delay
+		glog.V(4).Info("Delay re-processing of deployment by configured delay")
+		c.enqueueAfter(cd, metricCheckDelay)
+		return nil
 	}
-	if !healthy {
-		// TODO rollback canary deployment and don't proceed for stable deployment
+	checkpoint := cd.Status.CanaryDeploymentReadyStatusCheckpoint
+	if checkpoint.MetricCheckResult == kanarini.MetricCheckResultUnknown {
+		metricCheckTime := checkpoint.LatestReadyTimestamp.Add(metricCheckDelay)
+		remainingDelay := metricCheckTime.Sub(time.Now())
+		if remainingDelay > 0 {
+			// Delay re-processing of deployment by remaining delay
+			glog.V(4).Info("Delay re-processing of deployment by remaining delay")
+			c.enqueueAfter(cd, remainingDelay)
+			return nil
+		}
+		// Check the metric value and decide whether Service is healthy
+		result, err := c.checkDeploymentMetric(cd, &cd.Spec.Tracks.Canary)
+		if err != nil {
+			return err
+		}
+		glog.V(4).Infof("Metric check result: %q", result)
+
+		checkpoint.MetricCheckResult = result
+		cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+		if err != nil {
+			return err
+		}
+		// We will get an event with up-to-date object
+		return nil
+	}
+	if checkpoint.MetricCheckResult != kanarini.MetricCheckResultSuccess {
+		// TODO support rolling back canary deployment
 		glog.V(4).Info("Canary track deployment is not healthy. Stopping propagation")
 		return nil
 	}
 	// Create a stable track deployment
 	stableTrackDeployment, err := c.createTrackDeployment(cd, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
 	// Wait for a canary track deployment to succeed
-	// Wait for a canary track deployment to succeed
 	if !IsReady(stableTrackDeployment) {
-		// TODO exponential delay + watch on deployment objects
-		return errors.New("Stable track deployment is not ready")
+		glog.V(4).Info("Stable track deployment is not ready")
+		// We will get an event once Deployment object is updated
+		return nil
 	}
 	glog.V(4).Info("Stable track deployment is ready!")
 	// Done
+	glog.V(4).Infof("Finished reconciling canary deployment %s/%s", cd.Namespace, cd.Name)
 	return nil
 }
 
-func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeployment, trackSpec *kanarini.DeploymentTrackSpec) (bool, error) {
+func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDeployment, trackSpec *kanarini.DeploymentTrackSpec) (kanarini.MetricCheckResult, error) {
 	for _, metricSpec := range trackSpec.Metrics {
 		switch metricSpec.Type {
 		case kanarini.ObjectMetricSourceType:
 			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.Object.Metric.Selector)
 			if err != nil {
-				return false, err
+				return "", err
 			}
 			val, _, err := c.metricsClient.GetObjectMetric(metricSpec.Object.Metric.Name, cd.Namespace, &metricSpec.Object.DescribedObject, metricSelector)
 			glog.V(4).Infof("Custom metric value: %v", val)
 			glog.V(4).Infof("Custom metric target value: %v", metricSpec.Object.Target.Value.MilliValue())
 			// If metric value is equal or greater than target value, it's considered unhealthy
 			if val >= metricSpec.Object.Target.Value.MilliValue() {
-				return false, nil
+				return kanarini.MetricCheckResultFailure, nil
 			}
 		case kanarini.ExternalMetricSourceType:
 			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.External.Metric.Selector)
 			if err != nil {
-				return false, err
+				return "", err
 			}
 			metrics, _, err := c.metricsClient.GetExternalMetric(metricSpec.Object.Metric.Name, cd.Namespace, metricSelector)
 			var sum int64 = 0
@@ -84,14 +121,14 @@ func (c *CanaryDeploymentController) isServiceHealthy(cd *kanarini.CanaryDeploym
 			}
 			// If metric value is equal or greater than target value, it's considered unhealthy
 			if sum >= metricSpec.External.Target.Value.MilliValue() {
-				return false, nil
+				return kanarini.MetricCheckResultFailure, nil
 			}
 		default:
-			return false, errors.New(fmt.Sprintf("Unexpected metric source type: %v", metricSpec.Type))
+			return "", errors.New(fmt.Sprintf("Unexpected metric source type: %v", metricSpec.Type))
 		}
 	}
 
-	return true, nil
+	return kanarini.MetricCheckResultSuccess, nil
 }
 
 func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, dList []*apps.Deployment, trackSpec *kanarini.DeploymentTrackSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
@@ -195,7 +232,11 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 		needsUpdate = true
 	}
 	if needsUpdate {
-		_, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+		cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+		if err != nil {
+			return nil, err
+		}
+		return createdDeployment, nil
 	}
-	return createdDeployment, err
+	return createdDeployment, nil
 }

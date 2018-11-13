@@ -78,7 +78,24 @@ type CanaryDeploymentStatus struct {
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	Conditions []CanaryDeploymentCondition `json:"conditions,omitempty"`
+
+	// Checkpoint used to calculate delay to check metric for canary Deployment
+	CanaryDeploymentReadyStatusCheckpoint *DeploymentReadyStatusCheckpoint `json:"deploymentReadyStatusCheckpoint,omitempty"`
 }
+
+type DeploymentReadyStatusCheckpoint struct {
+	TemplateHash string `json:"templateHash,omitempty"`
+	LatestReadyTimestamp metav1.Time `json:"latestReadyTimestamp,omitempty"`
+	MetricCheckResult MetricCheckResult `json:"metricCheckResult,omitempty"`
+}
+
+type MetricCheckResult string
+
+const (
+	MetricCheckResultUnknown MetricCheckResult = ""
+	MetricCheckResultSuccess MetricCheckResult = "Success"
+	MetricCheckResultFailure MetricCheckResult = "Failure"
+)
 
 type CanaryDeploymentConditionType string
 
@@ -126,6 +143,9 @@ type DeploymentTrackSpec struct {
 
 	// Labels to add to pods to distinguish between tracks
 	Labels map[string]string `json:"labels,omitempty"`
+
+	// Delay to wait before checking metric values
+	MetricCheckDelaySeconds int32 `json:"metricCheckDelaySeconds,omitempty"`
 
 	// Metrics contains the specifications for which to use to determine whether
 	// the service is healthy.

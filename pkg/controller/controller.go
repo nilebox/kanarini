@@ -52,7 +52,7 @@ type CanaryDeploymentController struct {
 	// To allow injection of syncDeployment for testing.
 	syncHandler func(dKey string) error
 	// used for unit testing
-	enqueueDeployment func(deployment *kanarini.CanaryDeployment)
+	enqueueCanaryDeployment func(deployment *kanarini.CanaryDeployment)
 
 	// cdLister can list/get canary deployments from the shared informer's store
 	cdLister listers.CanaryDeploymentLister
@@ -117,8 +117,15 @@ func NewController(
 		// This will enter the sync loop and no-op, because the deployment has been deleted from the store.
 		DeleteFunc: cdc.deleteCanaryDeployment,
 	})
+	// Subscribe to Deployment events to trigger re-processing of parent CanaryDeployment
+	dInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    cdc.addDeployment,
+		UpdateFunc: cdc.updateDeployment,
+		// This will enter the sync loop and no-op, because the deployment has been deleted from the store.
+		DeleteFunc: cdc.deleteDeployment,
+	})
 	cdc.syncHandler = cdc.syncDeployment
-	cdc.enqueueDeployment = cdc.enqueue
+	cdc.enqueueCanaryDeployment = cdc.enqueue
 
 	cdc.cdLister = cdInformer.Lister()
 	cdc.dLister = dInformer.Lister()
@@ -149,14 +156,14 @@ func (c *CanaryDeploymentController) Run(workers int, stopCh <-chan struct{}) {
 func (c *CanaryDeploymentController) addCanaryDeployment(obj interface{}) {
 	d := obj.(*kanarini.CanaryDeployment)
 	glog.V(4).Infof("Adding canary deployment %s", d.Name)
-	c.enqueueDeployment(d)
+	c.enqueueCanaryDeployment(d)
 }
 
 func (c *CanaryDeploymentController) updateCanaryDeployment(old, cur interface{}) {
 	oldD := old.(*kanarini.CanaryDeployment)
 	curD := cur.(*kanarini.CanaryDeployment)
 	glog.V(4).Infof("Updating canary deployment %s", oldD.Name)
-	c.enqueueDeployment(curD)
+	c.enqueueCanaryDeployment(curD)
 }
 
 func (c *CanaryDeploymentController) deleteCanaryDeployment(obj interface{}) {
@@ -174,7 +181,56 @@ func (c *CanaryDeploymentController) deleteCanaryDeployment(obj interface{}) {
 		}
 	}
 	glog.V(4).Infof("Deleting canary deployment %s", d.Name)
-	c.enqueueDeployment(d)
+	c.enqueueCanaryDeployment(d)
+}
+
+func (c *CanaryDeploymentController) addDeployment(obj interface{}) {
+	d := obj.(*apps.Deployment)
+	glog.V(4).Infof("Adding deployment %s", d.Name)
+
+	c.processDeploymentEvent(d)
+}
+
+func (c *CanaryDeploymentController) updateDeployment(old, cur interface{}) {
+	oldD := old.(*apps.Deployment)
+	curD := cur.(*apps.Deployment)
+	glog.V(4).Infof("Updating deployment %s", oldD.Name)
+	c.processDeploymentEvent(curD)
+}
+
+func (c *CanaryDeploymentController) deleteDeployment(obj interface{}) {
+	d, ok := obj.(*apps.Deployment)
+	if !ok {
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			utilruntime.HandleError(fmt.Errorf("Couldn't get object from tombstone %#v", obj))
+			return
+		}
+		d, ok = tombstone.Obj.(*apps.Deployment)
+		if !ok {
+			utilruntime.HandleError(fmt.Errorf("Tombstone contained object that is not a Deployment %#v", obj))
+			return
+		}
+	}
+	glog.V(4).Infof("Deleting deployment %s", d.Name)
+	c.processDeploymentEvent(d)
+}
+
+func (c *CanaryDeploymentController)  processDeploymentEvent(d *apps.Deployment) {
+	ownerRef := metav1.GetControllerOf(d)
+	if ownerRef == nil {
+		return
+	}
+	if ownerRef.Kind != kanarini.CanaryDeploymentResourceKind {
+		return
+	}
+	cd, err := c.cdLister.CanaryDeployments(d.Namespace).Get(ownerRef.Name)
+	if err != nil {
+		glog.V(4).Infof("Failed to get CanaryDeployment: %v", err)
+		return
+	}
+	glog.V(4).Infof("Adding canary deployment %s", cd.Name)
+	c.enqueueCanaryDeployment(cd)
 }
 
 // worker runs a worker thread that just dequeues items, processes them, and marks them done.

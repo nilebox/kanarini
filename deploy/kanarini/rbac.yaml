@@ -1,2 +1,36 @@
 ---
-# TODO
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: kanarini
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+- apiGroups: ["kanarini.nilebox.github.com"]
+  resources: ["canarydeployments", "canarydeployments/status"]
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kanarini
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kanarini
+subjects:
+- kind: ServiceAccount
+  name: kanarini
+  namespace: kanarini

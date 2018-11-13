@@ -71,8 +71,14 @@ echo "Installing Custom Metrics API Server into cluster"
 
 echo "-----------------------------------------------------------------------"
 
+# Install kanarini controller
+echo "Installing kanarini (CanaryDeployment) controller into cluster"
+kubectl apply -f ./kanarini
+
+echo "-----------------------------------------------------------------------"
+
 # Install kanarini example app
-echo "Installing example app into cluster"
+echo "Installing kanarini example app into cluster"
 kubectl apply -f ./kanarini-demo
 
 echo "-----------------------------------------------------------------------"

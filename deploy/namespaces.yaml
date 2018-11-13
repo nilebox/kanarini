@@ -4,14 +4,19 @@ kind: Namespace
 metadata:
   name: heptio-contour
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kanarini
+---
 kind: Namespace
 apiVersion: v1
 metadata:
   name: kanarini-demo
   labels:
       monitored: "true"
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: monitoring
