@@ -21,7 +21,8 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	glog.V(4).Infof("CanaryDeployment: %v", string(cdBytes))
 
 	// Create a canary track deployment
-	canaryTrackDeployment, err := c.createTrackDeployment(cd, dList, &cd.Spec.Tracks.Canary, kanarini.CanaryTrackName)
+	templateHash := controller.ComputeHash(&cd.Spec.Template, nil)
+	canaryTrackDeployment, err := c.createTrackDeployment(cd, templateHash, dList, &cd.Spec.Tracks.Canary.TrackDeploymentSpec, kanarini.CanaryTrackName)
 	if err != nil {
 		return err
 	}
@@ -68,6 +69,18 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		glog.V(4).Infof("Metric check result: %q", result)
 
 		checkpoint.MetricCheckResult = result
+		if result == kanarini.MetricCheckResultSuccess {
+			templateBytes, err := json.Marshal(cd.Spec.Template)
+			if err != nil {
+				glog.V(4).Info("Failed to marshal template")
+				return err
+			}
+			cd.Status.LatestSuccessfulDeploymentSnapshot = &kanarini.DeploymentSnapshot{
+				TemplateHash: templateHash,
+				Template: string(templateBytes),
+				Timestamp: metav1.Now(),
+			}
+		}
 		cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
 		if err != nil {
 			return err
@@ -81,7 +94,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		return nil
 	}
 	// Create a stable track deployment
-	stableTrackDeployment, err := c.createTrackDeployment(cd, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
+	stableTrackDeployment, err := c.createTrackDeployment(cd, templateHash, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
 	// Wait for a canary track deployment to succeed
 	if !IsReady(stableTrackDeployment) {
 		glog.V(4).Info("Stable track deployment is not ready")
@@ -94,7 +107,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	return nil
 }
 
-func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDeployment, trackSpec *kanarini.DeploymentTrackSpec) (kanarini.MetricCheckResult, error) {
+func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDeployment, trackSpec *kanarini.CanaryTrackDeploymentSpec) (kanarini.MetricCheckResult, error) {
 	for _, metricSpec := range trackSpec.Metrics {
 		switch metricSpec.Type {
 		case kanarini.ObjectMetricSourceType:
@@ -131,10 +144,8 @@ func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDe
 	return kanarini.MetricCheckResultSuccess, nil
 }
 
-func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, dList []*apps.Deployment, trackSpec *kanarini.DeploymentTrackSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
+func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, templateHash string, dList []*apps.Deployment, trackSpec *kanarini.TrackDeploymentSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
 	newDeploymentTemplate := *cd.Spec.Template.DeepCopy()
-	templateHash := controller.ComputeHash(&newDeploymentTemplate, nil)
-	_ = templateHash // Useful for rollback implementation
 	annotations := newDeploymentTemplate.Annotations
 	if annotations == nil {
 		annotations = make(map[string]string)

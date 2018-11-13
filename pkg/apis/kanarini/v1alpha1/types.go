@@ -81,6 +81,9 @@ type CanaryDeploymentStatus struct {
 
 	// Checkpoint used to calculate delay to check metric for canary Deployment
 	CanaryDeploymentReadyStatusCheckpoint *DeploymentReadyStatusCheckpoint `json:"deploymentReadyStatusCheckpoint,omitempty"`
+
+	// Keeps a copy of the latest successful deployment to be used for Rollback strategy
+	LatestSuccessfulDeploymentSnapshot *DeploymentSnapshot `json:"latestSuccessfulDeploymentSnapshot,omitempty"`
 }
 
 type DeploymentReadyStatusCheckpoint struct {
@@ -96,6 +99,12 @@ const (
 	MetricCheckResultSuccess MetricCheckResult = "Success"
 	MetricCheckResultFailure MetricCheckResult = "Failure"
 )
+
+type DeploymentSnapshot struct {
+	TemplateHash string `json:"templateHash,omitempty"`
+	Template string `json:"template,omitempty"`
+	Timestamp metav1.Time `json:"timestamp,omitempty"`
+}
 
 type CanaryDeploymentConditionType string
 
@@ -131,11 +140,13 @@ type CanaryDeploymentCondition struct {
 }
 
 type CanaryDeploymentTracks struct {
-	Canary DeploymentTrackSpec `json:"canary,omitempty"`
-	Stable DeploymentTrackSpec `json:"stable,omitempty"`
+	Canary CanaryTrackDeploymentSpec `json:"canary,omitempty"`
+	Stable TrackDeploymentSpec       `json:"stable,omitempty"`
 }
 
-type DeploymentTrackSpec struct {
+type CanaryTrackDeploymentSpec struct {
+	TrackDeploymentSpec
+
 	// Number of desired pods. This is a pointer to distinguish between explicit
 	// zero and not specified. Defaults to 1.
 	// +optional
@@ -151,7 +162,29 @@ type DeploymentTrackSpec struct {
 	// the service is healthy.
 	// +optional
 	Metrics []MetricSpec `json:"metrics,omitempty"`
+
+	// Action to perform in case of unsuccessful metric check
+	FailureHandlingStrategy MetricFailureHandlingStrategy `json:"failureHandlingStrategy,omitempty"`
 }
+
+type TrackDeploymentSpec struct {
+	// Number of desired pods. This is a pointer to distinguish between explicit
+	// zero and not specified. Defaults to 1.
+	// +optional
+	Replicas *int32 `json:"replicas,omitempty"`
+
+	// Labels to add to pods to distinguish between tracks
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type MetricFailureHandlingStrategy string
+
+const (
+	// Stop change propagation to stable track
+	MetricFailureHandlingStrategyStopPropagation MetricFailureHandlingStrategy = "StopPropagation"
+	// Rollback canary track deployment to the previous state
+	MetricFailureHandlingStrategyRollback MetricFailureHandlingStrategy = "Rollback"
+)
 
 // MetricSpec specifies how to scale based on a single metric
 // (only `type` and one other matching field should be set at once).
