@@ -5,6 +5,9 @@ metadata:
   name: emoji
   namespace: kanarini-demo
 spec:
+  selector:
+    matchLabels:
+      app: emoji
   template:
     metadata:
       labels:
@@ -54,9 +57,9 @@ spec:
           metric:
             name: "request_count:failure:rate1m"
           target:
-            type: value
+            type: Value
             value: 0.1
     stable:
-      replicas: 5
+      replicas: 2
       labels:
         track: stable

@@ -33,19 +33,6 @@ spec:
   selector:
     app: emoji
     track: stable
-#  ports:
-#  - name: port-1
-#    nodePort: 30470
-#    port: 8080
-#    protocol: TCP
-#    targetPort: 8080
-#  - name: port-2
-#    nodePort: 30917
-#    port: 9090
-#    protocol: TCP
-#    targetPort: 9090
-#  sessionAffinity: None
-#  type: NodePort
   ports:
   - protocol: TCP
     port: 80
@@ -107,21 +94,3 @@ spec:
     targetPort: 9090
   sessionAffinity: None
   type: NodePort
----
-#apiVersion: extensions/v1beta1
-#kind: Ingress
-#metadata:
-#  name: example
-#  namespace: example
-#spec:
-#  rules:
-#  - http:
-#      paths:
-#      - path: /test
-#        backend:
-#          serviceName: example
-#          servicePort: 80
-#      - path: /metrics
-#        backend:
-#          serviceName: example
-#          servicePort: 9090
