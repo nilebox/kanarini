@@ -63,6 +63,12 @@ kubectl apply -f ./prometheus-operator
 
 echo "-----------------------------------------------------------------------"
 
+# Install Grafana
+echo "Installing Grafana into cluster"
+kubectl apply -f ./grafana
+
+echo "-----------------------------------------------------------------------"
+
 # Install Custom Metrics API Server
 echo "Installing Custom Metrics API Server into cluster"
 ./custom-metrics-api/gencerts.sh

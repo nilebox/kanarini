@@ -1,0 +1,17 @@
+---
+# expose Grafana to public
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-public
+  namespace: monitoring
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    nodePort: 30988
+    port: 3000
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: grafana

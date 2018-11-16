@@ -11,7 +11,7 @@ spec:
       services:
         - name: emoji-canary
           port: 80
-          weight: 50
+          weight: 20
         - name: emoji-stable
           port: 80
-          weight: 50
+          weight: 80
