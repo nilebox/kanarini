@@ -69,13 +69,19 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		glog.V(4).Infof("Metric check result: %q", result)
 
 		checkpoint.MetricCheckResult = result
+		templateBytes, err := json.Marshal(cd.Spec.Template)
+		if err != nil {
+			glog.V(4).Info("Failed to marshal template")
+			return err
+		}
 		if result == kanarini.MetricCheckResultSuccess {
-			templateBytes, err := json.Marshal(cd.Spec.Template)
-			if err != nil {
-				glog.V(4).Info("Failed to marshal template")
-				return err
-			}
 			cd.Status.LatestSuccessfulDeploymentSnapshot = &kanarini.DeploymentSnapshot{
+				TemplateHash: templateHash,
+				Template: string(templateBytes),
+				Timestamp: metav1.Now(),
+			}
+		} else if result == kanarini.MetricCheckResultFailure {
+			cd.Status.LatestFailedDeploymentSnapshot = &kanarini.DeploymentSnapshot{
 				TemplateHash: templateHash,
 				Template: string(templateBytes),
 				Timestamp: metav1.Now(),

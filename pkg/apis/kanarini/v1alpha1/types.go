@@ -84,6 +84,9 @@ type CanaryDeploymentStatus struct {
 
 	// Keeps a copy of the latest successful deployment to be used for Rollback strategy
 	LatestSuccessfulDeploymentSnapshot *DeploymentSnapshot `json:"latestSuccessfulDeploymentSnapshot,omitempty"`
+
+	// Keeps a copy of the latest failed deployment to be used for Rollback strategy
+	LatestFailedDeploymentSnapshot *DeploymentSnapshot `json:"latestFailedDeploymentSnapshot,omitempty"`
 }
 
 type DeploymentReadyStatusCheckpoint struct {

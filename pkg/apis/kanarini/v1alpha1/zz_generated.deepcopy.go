@@ -138,6 +138,11 @@ func (in *CanaryDeploymentStatus) DeepCopyInto(out *CanaryDeploymentStatus) {
 		*out = new(DeploymentSnapshot)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.LatestFailedDeploymentSnapshot != nil {
+		in, out := &in.LatestFailedDeploymentSnapshot, &out.LatestFailedDeploymentSnapshot
+		*out = new(DeploymentSnapshot)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
