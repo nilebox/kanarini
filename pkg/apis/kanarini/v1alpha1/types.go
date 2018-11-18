@@ -74,6 +74,9 @@ type CanaryDeploymentStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
+	// The hash of pod template observed by the deployment controller.
+	ObservedTemplateHash string `json:"observedTemplateHash,omitempty"`
+
 	// Represents the latest available observations of a deployment's current state.
 	// +patchMergeKey=type
 	// +patchStrategy=merge

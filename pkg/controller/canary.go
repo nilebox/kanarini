@@ -22,6 +22,9 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 
 	// Create a canary track deployment
 	templateHash := controller.ComputeHash(&cd.Spec.Template, nil)
+	cd.Status.ObservedGeneration = cd.Generation
+	cd.Status.ObservedTemplateHash = templateHash
+
 	canaryTrackDeployment, err := c.createTrackDeployment(cd, templateHash, dList, &cd.Spec.Tracks.Canary.TrackDeploymentSpec, kanarini.CanaryTrackName)
 	if err != nil {
 		return err
@@ -151,13 +154,16 @@ func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDe
 }
 
 func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, templateHash string, dList []*apps.Deployment, trackSpec *kanarini.TrackDeploymentSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
-	newDeploymentTemplate := *cd.Spec.Template.DeepCopy()
-	annotations := newDeploymentTemplate.Annotations
+	template, err := getDesiredDeploymentTemplate(cd, templateHash)
+	if err != nil {
+		return nil, err
+	}
+	annotations := template.Annotations
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
 	annotations[kanarini.TemplateHashAnnotationKey] = templateHash
-	labels := newDeploymentTemplate.Labels
+	labels := template.Labels
 	if labels == nil {
 		labels = make(map[string]string)
 	}
@@ -174,7 +180,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 			Labels:          labels,
 		},
 		Spec: apps.DeploymentSpec{
-			Template:                newDeploymentTemplate,
+			Template:                *template,
 			Replicas:                trackSpec.Replicas,
 			Selector:                cd.Spec.Selector,
 			MinReadySeconds:         cd.Spec.MinReadySeconds,
@@ -183,7 +189,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 	}
 	// TODO this means we ignore selector from CD spec, we should extend the selector separately instead
 	newDeployment.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: newDeploymentTemplate.Labels,
+		MatchLabels: template.Labels,
 	}
 
 	// Create the new Deployment. If it already exists, then we need to check for possible
@@ -256,4 +262,19 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 		return createdDeployment, nil
 	}
 	return createdDeployment, nil
+}
+
+func getDesiredDeploymentTemplate(cd *kanarini.CanaryDeployment, templateHash string) (*corev1.PodTemplateSpec, error) {
+	if cd.Status.LatestFailedDeploymentSnapshot != nil && cd.Status.LatestFailedDeploymentSnapshot.TemplateHash == templateHash {
+		// Rollback to the latest successful deployment
+		if cd.Status.LatestSuccessfulDeploymentSnapshot != nil {
+			var template corev1.PodTemplateSpec
+			err := json.Unmarshal([]byte(cd.Status.LatestSuccessfulDeploymentSnapshot.Template), &template)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	templateCopy := *cd.Spec.Template.DeepCopy()
+	return &templateCopy, nil
 }
