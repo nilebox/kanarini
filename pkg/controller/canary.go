@@ -37,7 +37,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	}
 	glog.V(4).Info("Canary track deployment is ready!")
 	// Wait for metric delay to expire
-	metricCheckDelay := time.Duration(cd.Spec.Tracks.Canary.MetricCheckDelaySeconds) * time.Second
+	metricCheckDelay := time.Duration(cd.Spec.Tracks.Canary.MetricsCheckDelaySeconds) * time.Second
 	if cd.Status.CanaryDeploymentReadyStatusCheckpoint == nil || templateHash != cd.Status.CanaryDeploymentReadyStatusCheckpoint.TemplateHash {
 		glog.V(4).Info("Recording a ready status checkpoint")
 		cd.Status.CanaryDeploymentReadyStatusCheckpoint = &kanarini.DeploymentReadyStatusCheckpoint{
