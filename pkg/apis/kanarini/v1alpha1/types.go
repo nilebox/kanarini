@@ -153,16 +153,8 @@ type CanaryDeploymentTracks struct {
 type CanaryTrackDeploymentSpec struct {
 	TrackDeploymentSpec
 
-	// Number of desired pods. This is a pointer to distinguish between explicit
-	// zero and not specified. Defaults to 1.
-	// +optional
-	Replicas *int32 `json:"replicas,omitempty"`
-
-	// Labels to add to pods to distinguish between tracks
-	Labels map[string]string `json:"labels,omitempty"`
-
 	// Delay to wait before checking metric values
-	MetricCheckDelaySeconds int32 `json:"metricCheckDelaySeconds,omitempty"`
+	MetricsCheckDelaySeconds int32 `json:"metricsCheckDelaySeconds,omitempty"`
 
 	// Metrics contains the specifications for which to use to determine whether
 	// the service is healthy.

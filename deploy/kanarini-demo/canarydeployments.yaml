@@ -49,7 +49,7 @@ spec:
       replicas: 1
       labels:
         track: canary
-      metricCheckDelaySeconds: 120
+      metricsCheckDelaySeconds: 120
       metrics:
       - type: Object
         object:

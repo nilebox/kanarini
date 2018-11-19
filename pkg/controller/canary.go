@@ -217,6 +217,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 				// Pod template hashes are different; need to update the deployment
 				createdDeployment = createdDeployment.DeepCopy()
 				createdDeployment.Annotations = newDeployment.Annotations
+				createdDeployment.Labels = newDeployment.Labels
 				createdDeployment.Spec = newDeployment.Spec
 				createdDeployment, err = c.kubeClient.AppsV1().Deployments(createdDeployment.Namespace).Update(createdDeployment)
 				if err != nil {
