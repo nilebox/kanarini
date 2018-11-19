@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: emoji
-        image: nilebox/kanarini-example:0.0.0-516d618
+        image: nilebox/kanarini-example:0.0.0-4deb559
         args:
         - --v=4
         - --alsologtostderr
