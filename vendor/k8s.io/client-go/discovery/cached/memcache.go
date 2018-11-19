@@ -139,7 +139,7 @@ func (d *memCacheClient) Invalidate() {
 					continue
 				}
 			}
-			See https://github.com/kubernetes/kubernetes/pull/71190
+			// TODO See https://github.com/kubernetes/kubernetes/pull/71190
 			if len(r.APIResources) == 0 {
 				continue
 			}

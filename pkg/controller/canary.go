@@ -38,10 +38,10 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	glog.V(4).Info("Canary track deployment is ready!")
 	// Wait for metric delay to expire
 	metricCheckDelay := time.Duration(cd.Spec.Tracks.Canary.MetricCheckDelaySeconds) * time.Second
-	if cd.Status.CanaryDeploymentReadyStatusCheckpoint == nil || canaryTrackDeployment.Annotations[kanarini.TemplateHashAnnotationKey] != cd.Status.CanaryDeploymentReadyStatusCheckpoint.TemplateHash {
+	if cd.Status.CanaryDeploymentReadyStatusCheckpoint == nil || templateHash != cd.Status.CanaryDeploymentReadyStatusCheckpoint.TemplateHash {
 		glog.V(4).Info("Recording a ready status checkpoint")
 		cd.Status.CanaryDeploymentReadyStatusCheckpoint = &kanarini.DeploymentReadyStatusCheckpoint{
-			TemplateHash: canaryTrackDeployment.Annotations[kanarini.TemplateHashAnnotationKey],
+			TemplateHash: templateHash,
 			LatestReadyTimestamp: metav1.Now(),
 		}
 		cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
@@ -50,7 +50,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 			return err
 		}
 		// Delay re-processing of deployment by configured delay
-		glog.V(4).Info("Delay re-processing of deployment by configured delay")
+		glog.V(4).Infof("Delay re-processing of deployment by configured delay: %v", metricCheckDelay)
 		c.enqueueAfter(cd, metricCheckDelay)
 		return nil
 	}
@@ -60,7 +60,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		remainingDelay := metricCheckTime.Sub(time.Now())
 		if remainingDelay > 0 {
 			// Delay re-processing of deployment by remaining delay
-			glog.V(4).Info("Delay re-processing of deployment by remaining delay")
+			glog.V(4).Infof("Delay re-processing of deployment by remaining delay: %v", remainingDelay)
 			c.enqueueAfter(cd, remainingDelay)
 			return nil
 		}
@@ -215,7 +215,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 			// TODO: also need to check contents to make sure that there were no manual changes to deployment
 			if createdDeployment.Annotations[kanarini.TemplateHashAnnotationKey] != newDeployment.Annotations[kanarini.TemplateHashAnnotationKey] {
 				// Pod template hashes are different; need to update the deployment
-				createdDeployment := createdDeployment.DeepCopy()
+				createdDeployment = createdDeployment.DeepCopy()
 				createdDeployment.Annotations = newDeployment.Annotations
 				createdDeployment.Spec = newDeployment.Spec
 				createdDeployment, err = c.kubeClient.AppsV1().Deployments(createdDeployment.Namespace).Update(createdDeployment)

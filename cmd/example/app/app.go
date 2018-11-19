@@ -68,6 +68,8 @@ func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
 }
 
 func (a *App) Run(ctx context.Context) error {
+	glog.V(4).Info("Starting application...")
+
 	defer a.Logger.Sync() // nolint: errcheck
 	// unhandled error above, but we are terminating anyway
 
@@ -95,6 +97,7 @@ func (a *App) Run(ctx context.Context) error {
 	wg.Add(2)
 
 	go func() {
+		glog.V(4).Info("Starting metrics HTTP server...")
 		defer wg.Done()
 		err := auxServer.Run(ctx)
 		if err != nil {
@@ -103,6 +106,7 @@ func (a *App) Run(ctx context.Context) error {
 	}()
 
 	go func() {
+		glog.V(4).Info("Starting main HTTP server...")
 		defer wg.Done()
 		err := server.ListenAndServe()
 		if err != nil {
@@ -115,6 +119,8 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
+	glog.V(4).Info("Handling index request")
+
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	html := `
@@ -162,8 +168,8 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 			<div class="outer">
 				<div class="middle">
 					<div class="inner">
-						<div id="version">{version}</div>
-						<div id="emoji">{emoji}</div>
+						<div id="version">-</div>
+						<div id="emoji">-</div>
 					</div>
 				</div>
 			</div>
@@ -173,6 +179,8 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) infoHandler(w http.ResponseWriter, r *http.Request) {
+	glog.V(4).Info("Handling info request")
+
 	w.Header().Set("Content-Type", "application/json")
 	emotion := a.generateEmotion()
 
