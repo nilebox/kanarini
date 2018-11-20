@@ -5,6 +5,7 @@ metadata:
   name: prometheus
   namespace: monitoring
 spec:
+  logLevel: debug
   serviceAccountName: prometheus
   serviceMonitorNamespaceSelector:
     matchLabels:

@@ -47,9 +47,11 @@ rules:
   - namespaces
   - pods
   - services
+  - nodes
   verbs:
   - get
   - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding

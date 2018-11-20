@@ -125,6 +125,9 @@ func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDe
 				return "", err
 			}
 			val, _, err := c.metricsClient.GetObjectMetric(metricSpec.Object.Metric.Name, cd.Namespace, &metricSpec.Object.DescribedObject, metricSelector)
+			if err != nil {
+				return "", err
+			}
 			glog.V(4).Infof("Custom metric value: %v", val)
 			glog.V(4).Infof("Custom metric target value: %v", metricSpec.Object.Target.Value.MilliValue())
 			// If metric value is equal or greater than target value, it's considered unhealthy
@@ -137,6 +140,9 @@ func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDe
 				return "", err
 			}
 			metrics, _, err := c.metricsClient.GetExternalMetric(metricSpec.Object.Metric.Name, cd.Namespace, metricSelector)
+			if err != nil {
+				return "", err
+			}
 			var sum int64 = 0
 			for _, val := range metrics {
 				sum = sum + val

@@ -6,6 +6,7 @@ cd $DIR
 
 kubectl apply -f apiservice.yaml
 kubectl apply -f cm-adapter-serving-certs.yaml
+kubectl apply -f configmaps.yaml
 kubectl apply -f deployment.yaml
 kubectl apply -f rbac.yaml
 kubectl apply -f service.yaml
