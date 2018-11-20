@@ -20,12 +20,26 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	cdBytes, _ := json.Marshal(cd)
 	glog.V(4).Infof("CanaryDeployment: %v", string(cdBytes))
 
-	// Create a canary track deployment
-	templateHash := controller.ComputeHash(&cd.Spec.Template, nil)
+	// Last seen template
+	template := &cd.Spec.Template
+	templateHash := controller.ComputeHash(template, nil)
 	cd.Status.ObservedGeneration = cd.Generation
 	cd.Status.ObservedTemplateHash = templateHash
 
-	canaryTrackDeployment, err := c.createTrackDeployment(cd, templateHash, dList, &cd.Spec.Tracks.Canary.TrackDeploymentSpec, kanarini.CanaryTrackName)
+	// Check if we need to rollback
+	rollbackTemplate, err := getRollbackTemplate(cd, templateHash)
+	if err != nil {
+		return err
+	}
+	if rollbackTemplate != nil {
+		glog.V(4).Info("Rolling back to the latest successful template")
+		// Ignore spec template since it's broken
+		template = rollbackTemplate
+		templateHash = controller.ComputeHash(template, nil)
+	}
+
+	// Create a canary track deployment
+	canaryTrackDeployment, err := c.createTrackDeployment(cd, template, templateHash, dList, &cd.Spec.Tracks.Canary.TrackDeploymentSpec, kanarini.CanaryTrackName)
 	if err != nil {
 		return err
 	}
@@ -36,74 +50,77 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		return nil
 	}
 	glog.V(4).Info("Canary track deployment is ready!")
-	// Wait for metric delay to expire
-	metricCheckDelay := time.Duration(cd.Spec.Tracks.Canary.MetricsCheckDelaySeconds) * time.Second
-	if cd.Status.CanaryDeploymentReadyStatusCheckpoint == nil || templateHash != cd.Status.CanaryDeploymentReadyStatusCheckpoint.TemplateHash {
-		glog.V(4).Info("Recording a ready status checkpoint")
-		cd.Status.CanaryDeploymentReadyStatusCheckpoint = &kanarini.DeploymentReadyStatusCheckpoint{
-			TemplateHash: templateHash,
-			LatestReadyTimestamp: metav1.Now(),
-		}
-		cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
-		if err != nil {
-			glog.V(4).Infof("Failed to update CanaryDeployment status: %v", err)
-			return err
-		}
-		// Delay re-processing of deployment by configured delay
-		glog.V(4).Infof("Delay re-processing of deployment by configured delay: %v", metricCheckDelay)
-		c.enqueueAfter(cd, metricCheckDelay)
-		return nil
-	}
-	checkpoint := cd.Status.CanaryDeploymentReadyStatusCheckpoint
-	if checkpoint.MetricCheckResult == kanarini.MetricCheckResultUnknown {
-		metricCheckTime := checkpoint.LatestReadyTimestamp.Add(metricCheckDelay)
-		remainingDelay := metricCheckTime.Sub(time.Now())
-		if remainingDelay > 0 {
-			// Delay re-processing of deployment by remaining delay
-			glog.V(4).Infof("Delay re-processing of deployment by remaining delay: %v", remainingDelay)
-			c.enqueueAfter(cd, remainingDelay)
+	// If the template was already successfully checked before, skip metrics delay and check
+	if cd.Status.LatestSuccessfulDeploymentSnapshot == nil || cd.Status.LatestSuccessfulDeploymentSnapshot.TemplateHash != templateHash {
+		// Wait for metric delay to expire
+		metricCheckDelay := time.Duration(cd.Spec.Tracks.Canary.MetricsCheckDelaySeconds) * time.Second
+		if cd.Status.CanaryDeploymentReadyStatusCheckpoint == nil || templateHash != cd.Status.CanaryDeploymentReadyStatusCheckpoint.TemplateHash {
+			glog.V(4).Info("Recording a ready status checkpoint")
+			cd.Status.CanaryDeploymentReadyStatusCheckpoint = &kanarini.DeploymentReadyStatusCheckpoint{
+				TemplateHash:         templateHash,
+				LatestReadyTimestamp: metav1.Now(),
+			}
+			cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+			if err != nil {
+				glog.V(4).Infof("Failed to update CanaryDeployment status: %v", err)
+				return err
+			}
+			// Delay re-processing of deployment by configured delay
+			glog.V(4).Infof("Delay re-processing of deployment by configured delay: %v", metricCheckDelay)
+			c.enqueueAfter(cd, metricCheckDelay)
 			return nil
 		}
-		// Check the metric value and decide whether Service is healthy
-		result, err := c.checkDeploymentMetric(cd, &cd.Spec.Tracks.Canary)
-		if err != nil {
-			return err
-		}
-		glog.V(4).Infof("Metric check result: %q", result)
+		checkpoint := cd.Status.CanaryDeploymentReadyStatusCheckpoint
+		if checkpoint.MetricCheckResult == kanarini.MetricCheckResultUnknown {
+			metricCheckTime := checkpoint.LatestReadyTimestamp.Add(metricCheckDelay)
+			remainingDelay := metricCheckTime.Sub(time.Now())
+			if remainingDelay > 0 {
+				// Delay re-processing of deployment by remaining delay
+				glog.V(4).Infof("Delay re-processing of deployment by remaining delay: %v", remainingDelay)
+				c.enqueueAfter(cd, remainingDelay)
+				return nil
+			}
+			// Check the metric value and decide whether Service is healthy
+			result, err := c.checkDeploymentMetric(cd, &cd.Spec.Tracks.Canary)
+			if err != nil {
+				return err
+			}
+			glog.V(4).Infof("Metric check result: %q", result)
 
-		checkpoint.MetricCheckResult = result
-		templateBytes, err := json.Marshal(cd.Spec.Template)
-		if err != nil {
-			glog.V(4).Info("Failed to marshal template")
-			return err
-		}
-		if result == kanarini.MetricCheckResultSuccess {
-			cd.Status.LatestSuccessfulDeploymentSnapshot = &kanarini.DeploymentSnapshot{
-				TemplateHash: templateHash,
-				Template: string(templateBytes),
-				Timestamp: metav1.Now(),
+			checkpoint.MetricCheckResult = result
+			templateBytes, err := json.Marshal(cd.Spec.Template)
+			if err != nil {
+				glog.V(4).Info("Failed to marshal template")
+				return err
 			}
-		} else if result == kanarini.MetricCheckResultFailure {
-			cd.Status.LatestFailedDeploymentSnapshot = &kanarini.DeploymentSnapshot{
-				TemplateHash: templateHash,
-				Template: string(templateBytes),
-				Timestamp: metav1.Now(),
+			if result == kanarini.MetricCheckResultSuccess {
+				cd.Status.LatestSuccessfulDeploymentSnapshot = &kanarini.DeploymentSnapshot{
+					TemplateHash: templateHash,
+					Template:     string(templateBytes),
+					Timestamp:    metav1.Now(),
+				}
+			} else if result == kanarini.MetricCheckResultFailure {
+				cd.Status.LatestFailedDeploymentSnapshot = &kanarini.DeploymentSnapshot{
+					TemplateHash: templateHash,
+					Template:     string(templateBytes),
+					Timestamp:    metav1.Now(),
+				}
 			}
+			cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+			if err != nil {
+				return err
+			}
+			// We will get an event with up-to-date object
+			return nil
 		}
-		cd, err = c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
-		if err != nil {
-			return err
+		if checkpoint.MetricCheckResult != kanarini.MetricCheckResultSuccess {
+			// TODO support rolling back canary deployment
+			glog.V(4).Info("Canary track deployment is not healthy. Stopping propagation")
+			return nil
 		}
-		// We will get an event with up-to-date object
-		return nil
-	}
-	if checkpoint.MetricCheckResult != kanarini.MetricCheckResultSuccess {
-		// TODO support rolling back canary deployment
-		glog.V(4).Info("Canary track deployment is not healthy. Stopping propagation")
-		return nil
 	}
 	// Create a stable track deployment
-	stableTrackDeployment, err := c.createTrackDeployment(cd, templateHash, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
+	stableTrackDeployment, err := c.createTrackDeployment(cd, template, templateHash, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
 	// Wait for a canary track deployment to succeed
 	if !IsReady(stableTrackDeployment) {
 		glog.V(4).Info("Stable track deployment is not ready")
@@ -159,11 +176,8 @@ func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDe
 	return kanarini.MetricCheckResultSuccess, nil
 }
 
-func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, templateHash string, dList []*apps.Deployment, trackSpec *kanarini.TrackDeploymentSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
-	template, err := getDesiredDeploymentTemplate(cd, templateHash)
-	if err != nil {
-		return nil, err
-	}
+func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, template *corev1.PodTemplateSpec, templateHash string, dList []*apps.Deployment, trackSpec *kanarini.TrackDeploymentSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
+	template = template.DeepCopy()
 	annotations := template.Annotations
 	if annotations == nil {
 		annotations = make(map[string]string)
@@ -271,7 +285,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 	return createdDeployment, nil
 }
 
-func getDesiredDeploymentTemplate(cd *kanarini.CanaryDeployment, templateHash string) (*corev1.PodTemplateSpec, error) {
+func getRollbackTemplate(cd *kanarini.CanaryDeployment, templateHash string) (*corev1.PodTemplateSpec, error) {
 	if cd.Status.LatestFailedDeploymentSnapshot != nil && cd.Status.LatestFailedDeploymentSnapshot.TemplateHash == templateHash {
 		// Rollback to the latest successful deployment
 		if cd.Status.LatestSuccessfulDeploymentSnapshot != nil {
@@ -280,8 +294,9 @@ func getDesiredDeploymentTemplate(cd *kanarini.CanaryDeployment, templateHash st
 			if err != nil {
 				return nil, err
 			}
+			return &template, nil
 		}
 	}
-	templateCopy := *cd.Spec.Template.DeepCopy()
-	return &templateCopy, nil
+
+	return nil, nil
 }

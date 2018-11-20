@@ -20,7 +20,7 @@ spec:
       containers:
       - name: custom-metrics-apiserver
         # See https://github.com/DirectXMan12/k8s-prometheus-adapter/issues/135
-        image: nilebox/k8s-prometheus-adapter-amd64:latest
+        image: nilebox/k8s-prometheus-adapter-amd64:start-flag
         # image: quay.io/coreos/k8s-prometheus-adapter-amd64:v0.3.0
         args:
         - /adapter
@@ -30,7 +30,9 @@ spec:
         - --logtostderr=true
         - --prometheus-url=http://prometheus-operated.monitoring.svc:9090/
         # Shouldn't be too short, see https://github.com/DirectXMan12/k8s-prometheus-adapter/issues/135
-        - --metrics-relist-interval=90s
+        - --metrics-relist-interval=30s
+        # Extra flag from the forked repo, see https://github.com/DirectXMan12/k8s-prometheus-adapter/pull/136
+        - --metrics-start-duration=10m
         - --v=10
         - --config=/etc/adapter/config.yaml
         ports:
