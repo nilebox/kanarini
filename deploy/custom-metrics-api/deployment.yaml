@@ -27,7 +27,8 @@ spec:
         - --tls-private-key-file=/var/run/serving-cert/serving.key
         - --logtostderr=true
         - --prometheus-url=http://prometheus-operated.monitoring.svc:9090/
-        - --metrics-relist-interval=30s
+        # Shouldn't be too short, see https://github.com/DirectXMan12/k8s-prometheus-adapter/issues/135
+        - --metrics-relist-interval=90s
         - --v=10
         - --config=/etc/adapter/config.yaml
         ports:

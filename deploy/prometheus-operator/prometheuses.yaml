@@ -5,6 +5,8 @@ metadata:
   name: prometheus
   namespace: monitoring
 spec:
+  # baseImage: nilebox/prometheus
+  # tag: request-logging-5
   logLevel: debug
   serviceAccountName: prometheus
   serviceMonitorNamespaceSelector:
