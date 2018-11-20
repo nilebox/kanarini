@@ -45,6 +45,14 @@ cd $DIR
 
 echo "======================================================================="
 
+# Create CRDs (they need to be created before any instances)
+echo "Creating CRDs"
+kubectl apply -f ./crd
+# Sleep to make sure CRDs were processed by apiextensions-apiserver
+sleep 5
+
+echo "======================================================================="
+
 # Create namespaces (they need to be created before any objects inside)
 echo "Creating namespaces"
 kubectl apply -f ./namespaces.yaml

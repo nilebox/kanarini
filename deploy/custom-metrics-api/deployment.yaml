@@ -19,7 +19,9 @@ spec:
       serviceAccountName: custom-metrics-apiserver
       containers:
       - name: custom-metrics-apiserver
-        image: quay.io/coreos/k8s-prometheus-adapter-amd64:v0.3.0
+        # See https://github.com/DirectXMan12/k8s-prometheus-adapter/issues/135
+        image: nilebox/k8s-prometheus-adapter-amd64:latest
+        # image: quay.io/coreos/k8s-prometheus-adapter-amd64:v0.3.0
         args:
         - /adapter
         - --secure-port=6443
