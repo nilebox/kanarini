@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	defaultVersion     = "1.0"
-	defaultErrorRate     = 0.0
+	defaultVersion     = "2.0"
+	defaultErrorRate     = 1.0
 	defaultServerAddr    = ":8080"
 	defaultAuxServerAddr = ":9090"
 )
