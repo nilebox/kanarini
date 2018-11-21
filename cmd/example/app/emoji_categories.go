@@ -19,12 +19,15 @@ var happyCodes = []string{
 	//":smile_cat:",
 	//":raised_hands:",
 	//":sunny:",
-	":smile_cat:",
+	":cat:",
 	":koala:",
 	":rabbit:",
 	":dog:",
 	":hamster:",
-
+	":tiger:",
+	":bear:",
+	":cow:",
+	":panda_face:",
 }
 
 var sadCodes = []string{
