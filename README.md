@@ -34,7 +34,8 @@ To see Grafana dashboards, open in your browser http://localhost:30988/
 
 To see a working example, you can use `curl` or browser with address http://localhost:30900.
 Note that you need to set the header `Host: example.com` in order for Contour
-to forward requests to underlying "canary" and "stable" services.
+to forward requests to underlying "canary" and "stable" services. To achieve that,
+you can use a Firefox browser extension [Header Editor](https://addons.mozilla.org/en-US/firefox/addon/header-editor/).
 
 Alternatively, you could open service URLs directly:
 - canary: http://localhost:30980
