@@ -81,7 +81,7 @@ a local Kubernetes cluster (https://github.com/kubernetes-sigs/kind), installs
 additional components (Kanarini controller, 
 [Heptio Contour](https://github.com/heptio/contour), [Prometheus Operator](https://github.com/coreos/prometheus-operator),
 [Prometheus Adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter), Grafana)
-and deploys a demo application with `CanaryDeployment` resource, services and ingresses.
+and deploys a demo application with `CanaryDeployment` resource, services and ingress.
 
 First, run
 ```bash
