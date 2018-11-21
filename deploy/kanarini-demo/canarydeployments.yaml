@@ -57,7 +57,7 @@ spec:
             kind: "Service"
             name: "emoji-canary"
           metric:
-            name: "request_count:failure:rate1m"
+            name: "failure_rate_1m"
           target:
             type: Value
             value: 0.1

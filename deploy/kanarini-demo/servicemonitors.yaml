@@ -11,6 +11,7 @@ spec:
   - honorLabels: true
     port: metrics
     path: /metrics
+    interval: 5s
   selector:
     matchLabels:
       app: emoji

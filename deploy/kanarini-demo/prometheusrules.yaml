@@ -10,9 +10,43 @@ spec:
   groups:
   - name: example-rules
     rules:
+    # total requests
+    - expr: |
+        sum(increase(request_count_total[1m]))
+      record: total_requests_1m
+    - expr: |
+        sum(increase(request_count_total[1m])) by (service,version)
+      record: total_requests_by_service_version_1m
+    # successful requests
+    - expr: |
+        request_count{result="success"}
+      record: request_count_success
+    - expr: |
+        sum(increase(request_count_success[1m]))
+      record: success_requests_1m
+    - expr: |
+        sum(increase(request_count_success[1m])) by (service,version)
+      record: success_requests_by_service_version_1m
+    # failed requests
+    - expr: |
+        request_count{result="failure"}
+      record: request_count_failure
+    - expr: |
+        sum(increase(request_count_failure[1m]))
+      record: failure_requests_1m
+    - expr: |
+        sum(increase(request_count_failure[1m])) by (service,version)
+      record: failure_requests_by_service_version_1m
+    # aggregation
+    - expr: |
+        failure_requests_by_service_version_1m / total_requests_by_service_version_1m
+      record: failure_rate_by_service_version_1m
+    - expr: |
+        failure_requests_by_service_1m / total_requests_by_service_1m
+      record: failure_rate_by_service_1m
+    - expr: |
+        failure_requests_1m / total_requests_1m
+      record: failure_rate_total_1m
     - expr: |
         rate(request_count{result="failure"}[1m]) / ignoring(result) rate(request_count_total[1m])
-      record: request_count:failure:rate1m
-    - expr: |
-        rate(request_count{result="failure"}[1m]) / ignoring(result) rate(request_count_total[1m])
-      record: blabla
+      record: failure_rate_1m
