@@ -21,6 +21,13 @@ var (
 		},
 		[]string{"version"},
 	)
+	upGauge = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "up_version",
+			Help: "Up gauge with a version attached",
+		},
+		[]string{"version"},
+	)
 )
 
 func Register(registerer prometheus.Registerer, version string) *MonitorMiddleware {
@@ -29,9 +36,11 @@ func Register(registerer prometheus.Registerer, version string) *MonitorMiddlewa
 	requestCounter.WithLabelValues(version, flagToResult(true))
 	requestCounter.WithLabelValues(version, flagToResult(false))
 	totalRequestCounter.WithLabelValues(version)
+	upGauge.WithLabelValues(version).Set(1)
 
 	registerer.MustRegister(requestCounter)
 	registerer.MustRegister(totalRequestCounter)
+	registerer.MustRegister(upGauge)
 
 	return &MonitorMiddleware{
 		Version: version,

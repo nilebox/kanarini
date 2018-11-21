@@ -15,14 +15,14 @@ spec:
     spec:
       containers:
       - name: emoji
-        image: nilebox/kanarini-example:0.0.0-9740798
+        image: nilebox/kanarini-example:0.0.0-7235d9f
         args:
         - --v=4
         - --alsologtostderr
         - --error-rate
         - "0.0"
         - --version
-        - "5.0"
+        - "1.0"
         ports:
         - containerPort: 8080
           name: http
