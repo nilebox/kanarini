@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultVersion     = "3.0"
-	defaultErrorRate     = 0.05
+	defaultErrorRate     = 0.0
 	defaultServerAddr    = ":8080"
 	defaultAuxServerAddr = ":9090"
 )
@@ -216,7 +216,7 @@ func (a *App) getResponseCode(emotion Emotion) int {
 func (a *App) getBackgroundColor(emotion Emotion) string {
 	switch emotion {
 	case EmotionHappy:
-		return backgroundColorGreen
+		return backgroundColorBlue
 	case EmotionSad:
 		return backgroundColorRed
 	default:

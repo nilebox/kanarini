@@ -1,23 +1,30 @@
 package app
 
 var backgroundColorGreen = "#A5D6A7"
+var backgroundColorBlue = "#81D4FA"
 var backgroundColorRed = "#EF9A9A"
 
 var happyCodes = []string{
-	":sunglasses:",
-	":thumbsup:",
-	":ok:",
-	":tada:",
-	":grinning:",
-	":metal:",
-	":hugs:",
-	":crossed_fingers:",
-	":robot:",
-	":rocket:",
-	":doughnut:",
+	//":sunglasses:",
+	//":thumbsup:",
+	//":ok:",
+	//":tada:",
+	//":grinning:",
+	//":metal:",
+	//":hugs:",
+	//":crossed_fingers:",
+	//":robot:",
+	//":rocket:",
+	//":doughnut:",
+	//":smile_cat:",
+	//":raised_hands:",
+	//":sunny:",
 	":smile_cat:",
-	":raised_hands:",
-	":sunny:",
+	":koala:",
+	":rabbit:",
+	":dog:",
+	":hamster:",
+
 }
 
 var sadCodes = []string{
