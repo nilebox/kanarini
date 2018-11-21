@@ -44,7 +44,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 		return err
 	}
 	// Wait for a canary track deployment to succeed
-	if !IsReady(canaryTrackDeployment) {
+	if !IsDeploymentReady(canaryTrackDeployment) {
 		glog.V(4).Info("Canary track deployment is not ready")
 		// We will get an event once Deployment object is updated
 		return nil
@@ -122,7 +122,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Create a stable track deployment
 	stableTrackDeployment, err := c.createTrackDeployment(cd, template, templateHash, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
 	// Wait for a canary track deployment to succeed
-	if !IsReady(stableTrackDeployment) {
+	if !IsDeploymentReady(stableTrackDeployment) {
 		glog.V(4).Info("Stable track deployment is not ready")
 		// We will get an event once Deployment object is updated
 		return nil

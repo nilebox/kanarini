@@ -12,29 +12,37 @@ var (
 			Name: "request_count",
 			Help: "Counter of requests with result.",
 		},
-		[]string{"result"},
+		[]string{"version", "result"},
 	)
 	totalRequestCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "request_count_total",
 			Help: "Counter of total requests",
 		},
-		[]string{},
+		[]string{"version"},
 	)
 )
 
-func Register(registerer prometheus.Registerer) {
+func Register(registerer prometheus.Registerer, version string) *MonitorMiddleware {
 	// Initialize metrics to zero to prevent missing metrics
 	// See https://www.robustperception.io/existential-issues-with-metrics
-	requestCounter.WithLabelValues(flagToResult(true))
-	requestCounter.WithLabelValues(flagToResult(false))
-	totalRequestCounter.WithLabelValues()
+	requestCounter.WithLabelValues(version, flagToResult(true))
+	requestCounter.WithLabelValues(version, flagToResult(false))
+	totalRequestCounter.WithLabelValues(version)
 
 	registerer.MustRegister(requestCounter)
 	registerer.MustRegister(totalRequestCounter)
+
+	return &MonitorMiddleware{
+		Version: version,
+	}
 }
 
-func MonitorRequest(next http.Handler) http.Handler {
+type MonitorMiddleware struct {
+	Version string
+}
+
+func (m *MonitorMiddleware) MonitorRequest(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL != nil && r.URL.String() == "/favicon.ico" {
 			// Don't instrument favicon requests
@@ -43,8 +51,8 @@ func MonitorRequest(next http.Handler) http.Handler {
 		}
 		delegate := &ResponseWriterDelegator{ResponseWriter: w}
 		next.ServeHTTP(delegate, r)
-		requestCounter.WithLabelValues(codeToResult(delegate)).Inc()
-		totalRequestCounter.WithLabelValues().Inc()
+		requestCounter.WithLabelValues(m.Version, codeToResult(delegate)).Inc()
+		totalRequestCounter.WithLabelValues(m.Version).Inc()
 	}
 	return http.HandlerFunc(fn)
 }

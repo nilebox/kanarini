@@ -35,9 +35,12 @@ spec:
         - mountPath: /etc/grafana/provisioning/datasources
           name: grafana-datasources
           readOnly: false
-#        - mountPath: /etc/grafana/provisioning/dashboards
-#          name: grafana-dashboards
-#          readOnly: false
+        - mountPath: /etc/grafana/provisioning/dashboards
+          name: grafana-dashboards
+          readOnly: false
+        - mountPath: /grafana-dashboard-definitions/0/emoji
+          name: grafana-dashboard-emoji
+          readOnly: false
       serviceAccountName: grafana
       volumes:
       - emptyDir: {}
@@ -45,6 +48,9 @@ spec:
       - name: grafana-datasources
         configMap:
           name: grafana-datasources
-#      - configMap:
-#          name: grafana-dashboards
-#        name: grafana-dashboards
+      - configMap:
+          name: grafana-dashboards
+        name: grafana-dashboards
+      - configMap:
+          name: grafana-dashboard-emoji
+        name: grafana-dashboard-emoji

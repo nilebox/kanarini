@@ -79,8 +79,8 @@ func (a *App) Run(ctx context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 		Handler:        router,
 	}
-	middleware.Register(a.PrometheusRegistry)
-	router.Use(middleware.MonitorRequest)
+	monitor := middleware.Register(a.PrometheusRegistry, a.Version)
+	router.Use(monitor.MonitorRequest)
 	router.Handle("/", http.HandlerFunc(a.indexHandler))
 	router.Handle("/info", http.HandlerFunc(a.infoHandler))
 
