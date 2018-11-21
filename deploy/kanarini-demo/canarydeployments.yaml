@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: emoji
-        image: nilebox/kanarini-example:0.0.0-7235d9f
+        image: nilebox/kanarini-example:0.0.0-450dae4
         args:
         - --v=4
         - --alsologtostderr
@@ -49,7 +49,7 @@ spec:
       replicas: 1
       labels:
         track: canary
-      metricsCheckDelaySeconds: 120
+      metricsCheckDelaySeconds: 60
       metrics:
       - type: Object
         object:
