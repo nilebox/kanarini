@@ -111,9 +111,9 @@ requests directly to services without ingress.
 To test happy path scenario, change Docker image in 
 [canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/deploy/kanarini-demo/canarydeployments.yaml)
 to `nilebox/kanarini-example:3.0`. The change will be first applied to a "canary"
-Deployment, and then to "stable" Deployment.
+`Deployment`, and after a successful metric check it will be propagated to "stable" `Deployment`.
 
 To test non-happy path, change Docker image in 
 [canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/deploy/kanarini-demo/canarydeployments.yaml)
-to `nilebox/kanarini-example:2.0`. The change will be applied to a "canary"
-Deployment, but after failing metric check it will be rolled back.
+to `nilebox/kanarini-example:2.0`. The change will be initially applied to a "canary"
+`Deployment`, but after failing metric check it will be rolled back.
