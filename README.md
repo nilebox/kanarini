@@ -6,7 +6,7 @@ Kanarini is a CRD controller that implements canary deployment strategy by
 creating two Deployment objects - "canary" and "stable", and validating the
 healthiness of Deployments via calls to Custom Metrics API (https://github.com/kubernetes/metrics).
 
-Kanarini introduces a new Kubernetes resource, CanaryDeployment, that reflects
+Kanarini introduces a new Kubernetes resource, `CanaryDeployment`, that reflects
 the structure of standard Deployment with extra configuration for canary/stable
 deployment tracks.
 
