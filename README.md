@@ -32,7 +32,7 @@ export KUBECONFIG="$(kind get kubeconfig-path)"
 To see Grafana dashboards, open in your browser http://localhost:30988/ 
 (default username/password is `admin`/`admin`).
 
-To see a working example, you can use `curl` or browser with address localhost:30900.
+To see a working example, you can use `curl` or browser with address http://localhost:30900.
 Note that you need to set the header `Host: example.com` in order for Contour
 to forward requests to underlying "canary" and "stable" services.
 
