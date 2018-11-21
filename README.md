@@ -10,6 +10,70 @@ Kanarini introduces a new Kubernetes resource, `CanaryDeployment`, that reflects
 the structure of standard Deployment with extra configuration for canary/stable
 deployment tracks.
 
+## Example
+
+```yaml
+apiVersion: kanarini.nilebox.github.com/v1alpha1
+kind: CanaryDeployment
+metadata:
+  name: emoji
+  namespace: kanarini-demo
+spec:
+  selector:
+    matchLabels:
+      app: emoji
+  template:
+    metadata:
+      labels:
+        app: emoji
+    spec:
+      containers:
+      - name: emoji
+        image: nilebox/kanarini-example:1.0
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+  tracks:
+    canary:
+      replicas: 1
+      labels:
+        track: canary
+      metricsCheckDelaySeconds: 60
+      metrics:
+      - type: Object
+        object:
+          describedObject:
+            kind: "Service"
+            name: "emoji-canary"
+          metric:
+            name: "failure_rate_1m"
+          target:
+            type: Value
+            value: 0.1
+    stable:
+      replicas: 3
+      labels:
+        track: stable
+```
+
 ## Getting started
 
 The easiest way to try Kanarini is to run a "Quickstart" script that bootstraps
