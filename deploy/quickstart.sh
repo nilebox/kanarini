@@ -109,4 +109,7 @@ echo "- Testing stable service:"
 echo "    curl localhost:30981"
 echo "- Testing Contour ingress (load balancer routing traffic between canary and stable services):"
 echo "    curl --header \"Host: example.com\" localhost:30900"
+echo ""
+echo "To test rollback try changing a Docker image to nilebox/kanarini-example:3.0 via"
+ehco "  kubectl edit canarydeployment -n kanarini-demo emoji"
 
