@@ -7,18 +7,17 @@ var happyCodes = []string{
 	":sunglasses:",
 	":thumbsup:",
 	":ok:",
-	":white_check_mark:",
 	":tada:",
 	":grinning:",
 	":metal:",
 	":hugs:",
-	":ok_hand:",
 	":crossed_fingers:",
 	":robot:",
 	":rocket:",
-	":birthday:",
 	":doughnut:",
 	":smile_cat:",
+	":raised_hands:",
+	":sunny:",
 }
 
 var sadCodes = []string{
@@ -37,5 +36,7 @@ var sadCodes = []string{
 	":rotating_light:",
 	":tired_face:",
 	":flushed:",
-	":skull_and_crossbones:",
+	":cloud_with_lightning_and_rain:",
+	":ghost:",
+	":fearful:",
 }
