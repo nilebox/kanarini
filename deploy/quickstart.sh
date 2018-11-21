@@ -97,13 +97,16 @@ kubectl apply -f ./kanarini-demo
 
 echo "-----------------------------------------------------------------------"
 # Test that Ingress with load balancing works
-echo "Kubernetes cluster is ready. To switch kubectl do the following:"
+echo "Kubernetes cluster is ready. To switch kubectl context, run:"
 echo "  export KUBECONFIG=\"$(kind get kubeconfig-path)\""
-echo "To test that example application works, you can do the following:"
-echo "  Testing canary service:"
+echo ""
+echo "Demo:"
+echo "- Grafana dashboards:"
+echo "    http://localhost:30988/"
+echo "- Testing canary service:"
 echo "    curl localhost:30980"
-echo "  Testing stable service:"
+echo "- Testing stable service:"
 echo "    curl localhost:30981"
-echo "  Testing Contour ingress (load balancer routing traffic between canary and stable services):"
+echo "- Testing Contour ingress (load balancer routing traffic between canary and stable services):"
 echo "    curl --header \"Host: example.com\" localhost:30900"
 

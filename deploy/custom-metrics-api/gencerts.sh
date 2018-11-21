@@ -4,6 +4,13 @@ set -euo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd $DIR
 
+# If secret already exists, skip
+if kubectl get secret -n monitoring cm-adapter-serving-certs &> /dev/null;
+    then
+        echo "Certificate secret already exists, skipping"
+        exit 0
+fi
+
 # Detect if we are on mac or should use GNU base64 options
 case $(uname) in
         Darwin)
