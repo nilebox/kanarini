@@ -1,7 +1,7 @@
 package app
 
 var backgroundColorGreen = "#A5D6A7"
-var backgroundColorBlue = "#81D4FA"
+var backgroundColorBlue = "#03A9F4"
 var backgroundColorRed = "#EF9A9A"
 
 var happyCodes = []string{
