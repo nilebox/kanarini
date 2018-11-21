@@ -61,11 +61,13 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 3,
+      "id": 2,
       "links": [],
       "panels": [
         {
-          "aliasColors": {},
+          "aliasColors": {
+            "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
+          },
           "bars": true,
           "dashLength": 10,
           "dashes": false,
@@ -77,7 +79,7 @@ data:
             "x": 0,
             "y": 0
           },
-          "id": 4,
+          "id": 7,
           "legend": {
             "avg": false,
             "current": false,
@@ -101,7 +103,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(increase(request_count_total{service=\"emoji-canary\"}[1m])) by (version)",
+              "expr": "sum(increase(request_count[1m])) without (result,pod,endpoint,instance,job,namespace,service)",
               "format": "time_series",
               "intervalFactor": 1,
               "refId": "A"
@@ -110,7 +112,7 @@ data:
           "thresholds": [],
           "timeFrom": "10m",
           "timeShift": null,
-          "title": "Canary version",
+          "title": "Version (Summary)",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -141,89 +143,6 @@ data:
               "logBase": 1,
               "max": null,
               "min": "0",
-              "show": false
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": true,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "prometheus",
-          "fill": 1,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 12,
-            "y": 0
-          },
-          "id": 5,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": false,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(increase(request_count_total{service=\"emoji-stable\"}[1m])) by (version)",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": "10m",
-          "timeShift": null,
-          "title": "Stable version",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": "0",
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
@@ -244,8 +163,8 @@ data:
           "gridPos": {
             "h": 9,
             "w": 12,
-            "x": 0,
-            "y": 9
+            "x": 12,
+            "y": 0
           },
           "id": 2,
           "legend": {
@@ -326,7 +245,98 @@ data:
         },
         {
           "aliasColors": {
-            "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))": "#bf1b00"
+            "{version=\"1.0\"}": "#1f78c1",
+            "{version=\"2.0\"}": "#f9934e",
+            "{version=\"3.0\"}": "#e0f9d7"
+          },
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 9
+          },
+          "id": 4,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(increase(request_count_total{service=\"emoji-canary\"}[1m])) by (version)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": "10m",
+          "timeShift": null,
+          "title": "Canary version",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": null,
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "decimals": null,
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": false
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {
+            "{version=\"1.0\"}": "#1f78c1",
+            "{version=\"3.0\"}": "#e0f9d7",
+            "{version=\"5.0\"}": "#6ed0e0"
           },
           "bars": true,
           "dashLength": 10,
@@ -338,6 +348,91 @@ data:
             "w": 12,
             "x": 12,
             "y": 9
+          },
+          "id": 5,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(increase(request_count_total{service=\"emoji-stable\"}[1m])) by (version)",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": "10m",
+          "timeShift": null,
+          "title": "Stable version",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {
+            "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))": "#bf1b00"
+          },
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 18
           },
           "id": 6,
           "legend": {
@@ -415,6 +510,99 @@ data:
             "align": false,
             "alignLevel": null
           }
+        },
+        {
+          "aliasColors": {
+            "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))": "#bf1b00",
+            "sum(increase(request_count{result=\"failure\",service=\"emoji-stable\"}[1m]))": "#bf1b00"
+          },
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 18
+          },
+          "id": 8,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(increase(request_count{result=\"success\",service=\"emoji-stable\"}[1m]))",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "refId": "A"
+            },
+            {
+              "expr": "sum(increase(request_count{result=\"failure\",service=\"emoji-stable\"}[1m]))",
+              "format": "time_series",
+              "intervalFactor": 1,
+              "refId": "B"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": "10m",
+          "timeShift": null,
+          "title": "Error / Success (Stable)",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": null,
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
         }
       ],
       "refresh": "5s",
@@ -456,6 +644,5 @@ data:
       "timezone": "",
       "title": "Emoji",
       "uid": "Emoji",
-      "version": 11
+      "version": 5
     }
-

@@ -22,7 +22,7 @@ spec:
         - --error-rate
         - "0.0"
         - --version
-        - "1.0"
+        - "5.0"
         ports:
         - containerPort: 8080
           name: http
