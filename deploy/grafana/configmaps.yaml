@@ -106,6 +106,7 @@ data:
               "expr": "sum(increase(request_count[1m])) without (result,pod,endpoint,instance,job,namespace,service)",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "{{version}}",
               "refId": "A"
             }
           ],
@@ -153,6 +154,7 @@ data:
         },
         {
           "aliasColors": {
+            "failure": "#bf1b00",
             "sum(increase(request_count{result=\"failure\"}[1m]))": "#bf1b00"
           },
           "bars": true,
@@ -193,12 +195,14 @@ data:
               "expr": "sum(increase(request_count{result=\"success\"}[1m]))",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "success",
               "refId": "A"
             },
             {
               "expr": "sum(increase(request_count{result=\"failure\"}[1m]))",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "failure",
               "refId": "B"
             }
           ],
@@ -287,6 +291,7 @@ data:
               "expr": "sum(increase(request_count_total{service=\"emoji-canary\"}[1m])) by (version)",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "{{version}}",
               "refId": "A"
             }
           ],
@@ -376,6 +381,7 @@ data:
               "expr": "sum(increase(request_count_total{service=\"emoji-stable\"}[1m])) by (version)",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "{{version}}",
               "refId": "A"
             }
           ],
@@ -421,6 +427,7 @@ data:
         },
         {
           "aliasColors": {
+            "failure": "#bf1b00",
             "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))": "#bf1b00"
           },
           "bars": true,
@@ -461,12 +468,14 @@ data:
               "expr": "sum(increase(request_count{result=\"success\",service=\"emoji-canary\"}[1m]))",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "success",
               "refId": "A"
             },
             {
               "expr": "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "failure",
               "refId": "B"
             }
           ],
@@ -513,6 +522,7 @@ data:
         },
         {
           "aliasColors": {
+            "failure": "#bf1b00",
             "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))": "#bf1b00",
             "sum(increase(request_count{result=\"failure\",service=\"emoji-stable\"}[1m]))": "#bf1b00"
           },
@@ -554,12 +564,14 @@ data:
               "expr": "sum(increase(request_count{result=\"success\",service=\"emoji-stable\"}[1m]))",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "success",
               "refId": "A"
             },
             {
               "expr": "sum(increase(request_count{result=\"failure\",service=\"emoji-stable\"}[1m]))",
               "format": "time_series",
               "intervalFactor": 1,
+              "legendFormat": "failure",
               "refId": "B"
             }
           ],
@@ -644,5 +656,5 @@ data:
       "timezone": "",
       "title": "Emoji",
       "uid": "Emoji",
-      "version": 5
+      "version": 11
     }
