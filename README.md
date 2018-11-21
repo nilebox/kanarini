@@ -40,6 +40,7 @@ you can use a Firefox browser extension [Header Editor](https://addons.mozilla.o
 Alternatively, you could open service URLs directly:
 - canary: http://localhost:30980
 - stable: http://localhost:30981
+
 Note that in that case you won't get weighted load balancing, as you will be sending 
 requests directly to services without ingress.
 
