@@ -14,3 +14,6 @@ spec:
     - expr: |
         rate(request_count{result="failure"}[1m]) / ignoring(result) rate(request_count_total[1m])
       record: failure_rate_1m
+    - expr: |
+        sum(increase(request_count{result="failure"}[1m])) by (service,job,namespace) / sum(increase(request_count_total[1m])) by (service,job,namespace)
+      record: failure_by_service_1m
