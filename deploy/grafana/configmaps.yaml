@@ -69,6 +69,8 @@ data:
       "panels": [
         {
           "aliasColors": {
+            "2.0": "#eab839",
+            "3.0": "#1f78c1",
             "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
           },
           "bars": true,
@@ -255,9 +257,8 @@ data:
         },
         {
           "aliasColors": {
-            "{version=\"1.0\"}": "#1f78c1",
-            "{version=\"2.0\"}": "#f9934e",
-            "{version=\"3.0\"}": "#e0f9d7"
+            "emoji-canary": "#bf1b00",
+            "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
           },
           "bars": true,
           "dashLength": 10,
@@ -265,12 +266,12 @@ data:
           "datasource": "prometheus",
           "fill": 1,
           "gridPos": {
-            "h": 9,
-            "w": 12,
+            "h": 8,
+            "w": 24,
             "x": 0,
             "y": 9
           },
-          "id": 4,
+          "id": 11,
           "legend": {
             "avg": false,
             "current": false,
@@ -294,18 +295,18 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(increase(request_count_total{service=\"emoji-canary\"}[1m])) by (version)",
+              "expr": "failure_by_service_1m",
               "format": "time_series",
               "interval": "15s",
               "intervalFactor": 1,
-              "legendFormat": "{{version}}",
-              "refId": "A"
+              "legendFormat": "{{service}}",
+              "refId": "B"
             }
           ],
           "thresholds": [],
           "timeFrom": "10m",
           "timeShift": null,
-          "title": "Canary version",
+          "title": "Errors by service",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -346,9 +347,8 @@ data:
         },
         {
           "aliasColors": {
-            "{version=\"1.0\"}": "#1f78c1",
-            "{version=\"3.0\"}": "#e0f9d7",
-            "{version=\"5.0\"}": "#6ed0e0"
+            "3.0": "#1f78c1",
+            "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
           },
           "bars": true,
           "dashLength": 10,
@@ -358,10 +358,10 @@ data:
           "gridPos": {
             "h": 9,
             "w": 12,
-            "x": 12,
-            "y": 9
+            "x": 0,
+            "y": 17
           },
-          "id": 5,
+          "id": 9,
           "legend": {
             "avg": false,
             "current": false,
@@ -381,11 +381,11 @@ data:
           "renderer": "flot",
           "seriesOverrides": [],
           "spaceLength": 10,
-          "stack": false,
+          "stack": true,
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(increase(request_count_total{service=\"emoji-stable\"}[1m])) by (version)",
+              "expr": "sum(up_version{service=\"emoji-canary\"}) by (version)",
               "format": "time_series",
               "interval": "15s",
               "intervalFactor": 1,
@@ -396,7 +396,7 @@ data:
           "thresholds": [],
           "timeFrom": "10m",
           "timeShift": null,
-          "title": "Stable version",
+          "title": "Pods (Canary)",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -412,6 +412,7 @@ data:
           },
           "yaxes": [
             {
+              "decimals": null,
               "format": "short",
               "label": null,
               "logBase": 1,
@@ -420,11 +421,102 @@ data:
               "show": true
             },
             {
+              "decimals": null,
               "format": "short",
               "label": null,
               "logBase": 1,
               "max": null,
-              "min": null,
+              "min": "0",
+              "show": false
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {
+            "3.0": "#1f78c1",
+            "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
+          },
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 17
+          },
+          "id": 10,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(up_version{service=\"emoji-stable\"}) by (version)",
+              "format": "time_series",
+              "interval": "15s",
+              "intervalFactor": 1,
+              "legendFormat": "{{version}}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": "10m",
+          "timeShift": null,
+          "title": "Pods (Stable)",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": null,
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "decimals": null,
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
               "show": false
             }
           ],
@@ -447,7 +539,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 18
+            "y": 26
           },
           "id": 6,
           "legend": {
@@ -545,7 +637,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 18
+            "y": 26
           },
           "id": 8,
           "legend": {
@@ -630,7 +722,11 @@ data:
         },
         {
           "aliasColors": {
-            "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
+            "2.0": "#eab839",
+            "3.0": "#1f78c1",
+            "{version=\"1.0\"}": "#1f78c1",
+            "{version=\"2.0\"}": "#f9934e",
+            "{version=\"3.0\"}": "#e0f9d7"
           },
           "bars": true,
           "dashLength": 10,
@@ -641,9 +737,9 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 27
+            "y": 35
           },
-          "id": 9,
+          "id": 4,
           "legend": {
             "avg": false,
             "current": false,
@@ -667,7 +763,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(up_version{service=\"emoji-canary\"}) by (version)",
+              "expr": "sum(increase(request_count_total{service=\"emoji-canary\"}[1m])) by (version)",
               "format": "time_series",
               "interval": "15s",
               "intervalFactor": 1,
@@ -678,7 +774,7 @@ data:
           "thresholds": [],
           "timeFrom": "10m",
           "timeShift": null,
-          "title": "Up (Canary)",
+          "title": "Canary version",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -719,7 +815,10 @@ data:
         },
         {
           "aliasColors": {
-            "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
+            "3.0": "#1f78c1",
+            "{version=\"1.0\"}": "#1f78c1",
+            "{version=\"3.0\"}": "#e0f9d7",
+            "{version=\"5.0\"}": "#6ed0e0"
           },
           "bars": true,
           "dashLength": 10,
@@ -730,9 +829,9 @@ data:
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 27
+            "y": 35
           },
-          "id": 10,
+          "id": 5,
           "legend": {
             "avg": false,
             "current": false,
@@ -752,11 +851,11 @@ data:
           "renderer": "flot",
           "seriesOverrides": [],
           "spaceLength": 10,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(up_version{service=\"emoji-stable\"}) by (version)",
+              "expr": "sum(increase(request_count_total{service=\"emoji-stable\"}[1m])) by (version)",
               "format": "time_series",
               "interval": "15s",
               "intervalFactor": 1,
@@ -767,7 +866,7 @@ data:
           "thresholds": [],
           "timeFrom": "10m",
           "timeShift": null,
-          "title": "Up (Stable)",
+          "title": "Stable version",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -783,7 +882,6 @@ data:
           },
           "yaxes": [
             {
-              "decimals": null,
               "format": "short",
               "label": null,
               "logBase": 1,
@@ -792,101 +890,11 @@ data:
               "show": true
             },
             {
-              "decimals": null,
               "format": "short",
               "label": null,
               "logBase": 1,
               "max": null,
-              "min": "0",
-              "show": false
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {
-            "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
-          },
-          "bars": true,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "prometheus",
-          "fill": 1,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 36
-          },
-          "id": 11,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": false,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(failure_rate_1m) by (service)",
-              "format": "time_series",
-              "interval": "15s",
-              "intervalFactor": 1,
-              "legendFormat": "",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": "10m",
-          "timeShift": null,
-          "title": "failure_rate_1m (Raw)",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "decimals": null,
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": "0",
-              "show": true
-            },
-            {
-              "decimals": null,
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": "0",
+              "min": null,
               "show": false
             }
           ],
