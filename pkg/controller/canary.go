@@ -147,6 +147,12 @@ func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDe
 			}
 			glog.V(4).Infof("Custom metric value: %v", val)
 			glog.V(4).Infof("Custom metric target value: %v", metricSpec.Object.Target.Value.MilliValue())
+			// Sometimes we get "value": "-9223372036854775808m" in Response from Prometheus Adapter,
+			// Either it's a bug in Prometheus Adapter, or some behavior of Prometheus that we don't understand
+			// For now force retry loop in that case
+			if val < 0 {
+				return kanarini.MetricCheckResultUnknown, errors.New("Negative metric values are not supported, the check will be retried")
+			}
 			// If metric value is equal or greater than target value, it's considered unhealthy
 			if val >= metricSpec.Object.Target.Value.MilliValue() {
 				return kanarini.MetricCheckResultFailure, nil

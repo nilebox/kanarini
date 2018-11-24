@@ -8,6 +8,8 @@ spec:
   # baseImage: nilebox/prometheus
   # tag: request-logging-5
   logLevel: debug
+  scrapeInterval: 5s
+  evaluationInterval: 5s
   serviceAccountName: prometheus
   serviceMonitorNamespaceSelector:
     matchLabels:
