@@ -33,7 +33,6 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	}
 	if rollbackTemplate != nil {
 		glog.V(4).Info("Rolling back to the latest successful template")
-		c.eventRecorder.Event(cd, corev1.EventTypeNormal, RollingBackReason, RollingBackMessage)
 		// Ignore spec template since it's broken
 		template = rollbackTemplate
 		templateHash = controller.ComputeHash(template, nil)
@@ -48,12 +47,10 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Wait for a canary track deployment to succeed
 	if !IsDeploymentReady(canaryTrackDeployment) {
 		glog.V(4).Info("Canary track deployment is not ready")
-		c.eventRecorder.Event(cd, corev1.EventTypeNormal, CanaryTrackDeploymentNotReadyReason, CanaryTrackDeploymentNotReadyMessage)
 		// We will get an event once Deployment object is updated
 		return nil
 	}
 	glog.V(4).Info("Canary track deployment is ready!")
-	c.eventRecorder.Event(cd, corev1.EventTypeNormal, CanaryTrackDeploymentReadyReason, CanaryTrackDeploymentReadyMessage)
 	// If the template was already successfully checked before, skip metrics delay and check
 	if cd.Status.LatestSuccessfulDeploymentSnapshot == nil || cd.Status.LatestSuccessfulDeploymentSnapshot.TemplateHash != templateHash {
 		// Wait for metric delay to expire
@@ -131,12 +128,10 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Wait for a canary track deployment to succeed
 	if !IsDeploymentReady(stableTrackDeployment) {
 		glog.V(4).Info("Stable track deployment is not ready")
-		c.eventRecorder.Event(cd, corev1.EventTypeNormal, StableTrackDeploymentNotReadyReason, StableTrackDeploymentNotReadyMessage)
 		// We will get an event once Deployment object is updated
 		return nil
 	}
 	glog.V(4).Info("Stable track deployment is ready!")
-	c.eventRecorder.Event(cd, corev1.EventTypeNormal, StableTrackDeploymentReadyReason, StableTrackDeploymentReadyMessage)
 	// Done
 	glog.V(4).Infof("Finished reconciling canary deployment %s/%s", cd.Namespace, cd.Name)
 	c.eventRecorder.Event(cd, corev1.EventTypeNormal, DoneProcessingReason, DoneProcessingMessage)
