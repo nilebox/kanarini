@@ -178,18 +178,6 @@ func (in *CanaryDeploymentTracks) DeepCopy() *CanaryDeploymentTracks {
 func (in *CanaryTrackDeploymentSpec) DeepCopyInto(out *CanaryTrackDeploymentSpec) {
 	*out = *in
 	in.TrackDeploymentSpec.DeepCopyInto(&out.TrackDeploymentSpec)
-	if in.Replicas != nil {
-		in, out := &in.Replicas, &out.Replicas
-		*out = new(int32)
-		**out = **in
-	}
-	if in.Labels != nil {
-		in, out := &in.Labels, &out.Labels
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
 	if in.Metrics != nil {
 		in, out := &in.Metrics, &out.Metrics
 		*out = make([]MetricSpec, len(*in))
