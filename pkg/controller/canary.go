@@ -33,6 +33,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	}
 	if rollbackTemplate != nil {
 		glog.V(4).Info("Rolling back to the latest successful template")
+		c.eventRecorder.Event(cd, corev1.EventTypeNormal, RollingBackReason, RollingBackMessage)
 		// Ignore spec template since it's broken
 		template = rollbackTemplate
 		templateHash = controller.ComputeHash(template, nil)
@@ -41,15 +42,18 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Create a canary track deployment
 	canaryTrackDeployment, err := c.createTrackDeployment(cd, template, templateHash, dList, &cd.Spec.Tracks.Canary.TrackDeploymentSpec, kanarini.CanaryTrackName)
 	if err != nil {
+		c.eventRecorder.Event(cd, corev1.EventTypeWarning, FailedToCreateCanaryTrackDeploymentReason, FailedToCreateCanaryTrackDeploymentMessage)
 		return err
 	}
 	// Wait for a canary track deployment to succeed
 	if !IsDeploymentReady(canaryTrackDeployment) {
 		glog.V(4).Info("Canary track deployment is not ready")
+		c.eventRecorder.Event(cd, corev1.EventTypeNormal, CanaryTrackDeploymentNotReadyReason, CanaryTrackDeploymentNotReadyMessage)
 		// We will get an event once Deployment object is updated
 		return nil
 	}
 	glog.V(4).Info("Canary track deployment is ready!")
+	c.eventRecorder.Event(cd, corev1.EventTypeNormal, CanaryTrackDeploymentReadyReason, CanaryTrackDeploymentReadyMessage)
 	// If the template was already successfully checked before, skip metrics delay and check
 	if cd.Status.LatestSuccessfulDeploymentSnapshot == nil || cd.Status.LatestSuccessfulDeploymentSnapshot.TemplateHash != templateHash {
 		// Wait for metric delay to expire
@@ -67,6 +71,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 			}
 			// Delay re-processing of deployment by configured delay
 			glog.V(4).Infof("Delay re-processing of deployment by configured delay: %v", metricCheckDelay)
+			c.eventRecorder.Eventf(cd, corev1.EventTypeNormal, DelayMetricsCheckReason, "Delay metrics check by configured delay: %v", metricCheckDelay)
 			c.enqueueAfter(cd, metricCheckDelay)
 			return nil
 		}
@@ -77,6 +82,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 			if remainingDelay > 0 {
 				// Delay re-processing of deployment by remaining delay
 				glog.V(4).Infof("Delay re-processing of deployment by remaining delay: %v", remainingDelay)
+				c.eventRecorder.Eventf(cd, corev1.EventTypeNormal, DelayMetricsCheckReason, "Delay metrics check by remaining delay: %v", remainingDelay)
 				c.enqueueAfter(cd, remainingDelay)
 				return nil
 			}
@@ -86,6 +92,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 				return err
 			}
 			glog.V(4).Infof("Metric check result: %q", result)
+			c.eventRecorder.Eventf(cd, corev1.EventTypeNormal, MetricsCheckResultReason, "Metrics check result: %v", result)
 
 			checkpoint.MetricCheckResult = result
 			templateBytes, err := json.Marshal(cd.Spec.Template)
@@ -114,8 +121,8 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 			return nil
 		}
 		if checkpoint.MetricCheckResult != kanarini.MetricCheckResultSuccess {
-			// TODO support rolling back canary deployment
 			glog.V(4).Info("Canary track deployment is not healthy. Stopping propagation")
+			c.eventRecorder.Event(cd, corev1.EventTypeWarning, MetricsCheckUnsuccessfulReason, "Metrics check is unsuccessful, stopping propagation")
 			return nil
 		}
 	}
@@ -124,12 +131,15 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Wait for a canary track deployment to succeed
 	if !IsDeploymentReady(stableTrackDeployment) {
 		glog.V(4).Info("Stable track deployment is not ready")
+		c.eventRecorder.Event(cd, corev1.EventTypeNormal, StableTrackDeploymentNotReadyReason, StableTrackDeploymentNotReadyMessage)
 		// We will get an event once Deployment object is updated
 		return nil
 	}
 	glog.V(4).Info("Stable track deployment is ready!")
+	c.eventRecorder.Event(cd, corev1.EventTypeNormal, StableTrackDeploymentReadyReason, StableTrackDeploymentReadyMessage)
 	// Done
 	glog.V(4).Infof("Finished reconciling canary deployment %s/%s", cd.Namespace, cd.Name)
+	c.eventRecorder.Event(cd, corev1.EventTypeNormal, DoneProcessingReason, DoneProcessingMessage)
 	return nil
 }
 

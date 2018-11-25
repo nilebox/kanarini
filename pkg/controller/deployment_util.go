@@ -4,6 +4,27 @@ import (
 	apps "k8s.io/api/apps/v1"
 )
 
+const (
+	RollingBackReason                         = "RollingBack"
+	FailedToCreateCanaryTrackDeploymentReason = "FailedToCreateCanaryTrackDeployment"
+	CanaryTrackDeploymentNotReadyReason          = "CanaryTrackDeploymentNotReady"
+	CanaryTrackDeploymentReadyReason          = "CanaryTrackDeploymentReady"
+	StableTrackDeploymentNotReadyReason          = "StableTrackDeploymentNotReady"
+	StableTrackDeploymentReadyReason          = "StableTrackDeploymentReady"
+	DelayMetricsCheckReason                   = "DelayMetricsCheck"
+	MetricsCheckResultReason                  = "DelayMetricsCheckResult"
+	MetricsCheckUnsuccessfulReason            = "MetricsCheckUnsuccessful"
+	DoneProcessingReason            = "DoneProcessing"
+
+	RollingBackMessage = "Rolling back to the latest successful template"
+	FailedToCreateCanaryTrackDeploymentMessage = "Failed to create a canary track deployment"
+	CanaryTrackDeploymentNotReadyMessage = "Canary track deployment is not ready"
+	CanaryTrackDeploymentReadyMessage = "Canary track deployment is ready"
+	StableTrackDeploymentNotReadyMessage = "Stable track deployment is not ready"
+	StableTrackDeploymentReadyMessage = "Stable track deployment is ready"
+	DoneProcessingMessage = "Finished reconciling update"
+)
+
 const timedOutReason = "ProgressDeadlineExceeded"
 
 func IsDeploymentReady(deployment *apps.Deployment) bool {
