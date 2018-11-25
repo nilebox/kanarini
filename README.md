@@ -1,4 +1,4 @@
-# Kanarini, Canary Deployment Controller for Kubernetes
+# Kanarini, Canary Deployment Controller for Kubernetes [![Build Status](https://travis-ci.com/nilebox/kanarini.svg?branch=master)](https://travis-ci.com/nilebox/kanarini)
 
 ## Overview
 
