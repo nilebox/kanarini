@@ -78,7 +78,6 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 			if remainingDelay > 0 {
 				// Delay re-processing of deployment by remaining delay
 				glog.V(4).Infof("Delay re-processing of deployment by remaining delay: %v", remainingDelay)
-				c.eventRecorder.Eventf(cd, corev1.EventTypeNormal, DelayMetricsCheckReason, "Delay metrics check by remaining delay: %v", remainingDelay)
 				c.enqueueAfter(cd, remainingDelay)
 				return nil
 			}
@@ -284,7 +283,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 	}
 
 	needsUpdate := false
-	if !alreadyExists && HasProgressDeadline(cd) {
+	if !alreadyExists {
 		msg := fmt.Sprintf("Created new Deployment %q", createdDeployment.Name)
 		c.eventRecorder.Event(cd, corev1.EventTypeNormal, CreatedDeploymentReason, msg)
 		condition := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentProgressing, corev1.ConditionTrue, NewDeploymentReason, msg)
