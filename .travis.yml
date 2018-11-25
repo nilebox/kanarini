@@ -27,6 +27,13 @@ before_install:
   ./install.sh --user
   rm -f install.sh
   mv .bazelrc.travis .bazelrc
+  - |
+  curl -Lo kubectl "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+  chmod +x kubectl
+  sudo mv kubectl /usr/local/bin/
+  - |
+  go get sigs.k8s.io/kind
+  kind create cluster --image="kindest/node:latest"
 install:
 - make setup
 script:
