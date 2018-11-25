@@ -58,7 +58,7 @@ data:
     {
       "annotations": {
         "list": [
-          
+
         ]
       },
       "editable": true,
@@ -69,6 +69,7 @@ data:
       "panels": [
         {
           "aliasColors": {
+            "1.0": "#7eb26d",
             "2.0": "#eab839",
             "3.0": "#1f78c1",
             "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
@@ -161,6 +162,7 @@ data:
         {
           "aliasColors": {
             "failure": "#bf1b00",
+            "success": "#7eb26d",
             "sum(increase(request_count{result=\"failure\"}[1m]))": "#bf1b00"
           },
           "bars": true,
@@ -258,6 +260,7 @@ data:
         {
           "aliasColors": {
             "emoji-canary": "#bf1b00",
+            "emoji-stable": "#eab839",
             "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
           },
           "bars": true,
@@ -306,7 +309,7 @@ data:
           "thresholds": [],
           "timeFrom": "10m",
           "timeShift": null,
-          "title": "Errors by service",
+          "title": "% of errors by service",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -347,6 +350,8 @@ data:
         },
         {
           "aliasColors": {
+            "1.0": "#7eb26d",
+            "2.0": "#eab839",
             "3.0": "#1f78c1",
             "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
           },
@@ -437,6 +442,7 @@ data:
         },
         {
           "aliasColors": {
+            "1.0": "#7eb26d",
             "3.0": "#1f78c1",
             "sum(increase(request_count_total{service=\"emoji-stable\"}[1m]))": "#1f78c1"
           },
@@ -528,6 +534,7 @@ data:
         {
           "aliasColors": {
             "failure": "#bf1b00",
+            "success": "#7eb26d",
             "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))": "#bf1b00"
           },
           "bars": true,
@@ -625,6 +632,7 @@ data:
         {
           "aliasColors": {
             "failure": "#bf1b00",
+            "success": "#7eb26d",
             "sum(increase(request_count{result=\"failure\",service=\"emoji-canary\"}[1m]))": "#bf1b00",
             "sum(increase(request_count{result=\"failure\",service=\"emoji-stable\"}[1m]))": "#bf1b00"
           },
@@ -722,6 +730,7 @@ data:
         },
         {
           "aliasColors": {
+            "1.0": "#7eb26d",
             "2.0": "#eab839",
             "3.0": "#1f78c1",
             "{version=\"1.0\"}": "#1f78c1",
@@ -815,6 +824,7 @@ data:
         },
         {
           "aliasColors": {
+            "1.0": "#7eb26d",
             "3.0": "#1f78c1",
             "{version=\"1.0\"}": "#1f78c1",
             "{version=\"3.0\"}": "#e0f9d7",
