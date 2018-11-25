@@ -12,7 +12,7 @@ const (
 	StableTrackDeploymentNotReadyReason          = "StableTrackDeploymentNotReady"
 	StableTrackDeploymentReadyReason          = "StableTrackDeploymentReady"
 	DelayMetricsCheckReason                   = "DelayMetricsCheck"
-	MetricsCheckResultReason                  = "DelayMetricsCheckResult"
+	MetricsCheckResultReason                  = "MetricsCheckResult"
 	MetricsCheckUnsuccessfulReason            = "MetricsCheckUnsuccessful"
 	DoneProcessingReason            = "DoneProcessing"
 

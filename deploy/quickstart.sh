@@ -112,4 +112,7 @@ echo "    curl --header \"Host: example.com\" localhost:30900"
 echo ""
 echo "To test rollback try changing a Docker image to nilebox/kanarini-example:2.0 via"
 echo "  kubectl edit canarydeployment -n kanarini-demo emoji"
+echo ""
+echo "To see progress, you can watch events"
+echo "  kubectl get event --namespace kanarini-demo --field-selector involvedObject.kind=CanaryDeployment,involvedObject.name=emoji"
 
