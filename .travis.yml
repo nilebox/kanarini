@@ -33,7 +33,8 @@ before_install:
   sudo mv kubectl /usr/local/bin/
   - |
   go get sigs.k8s.io/kind
-  kind create cluster --image="kindest/node:latest"
+  docker pull kindest/node:v1.12.2
+  kind create cluster --image="kindest/node:v1.12.2"
 install:
 - make setup
 script:
