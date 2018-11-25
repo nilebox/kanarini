@@ -41,7 +41,6 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Create a canary track deployment
 	canaryTrackDeployment, err := c.createTrackDeployment(cd, template, templateHash, dList, &cd.Spec.Tracks.Canary.TrackDeploymentSpec, kanarini.CanaryTrackName)
 	if err != nil {
-		c.eventRecorder.Event(cd, corev1.EventTypeWarning, FailedToCreateCanaryTrackDeploymentReason, FailedToCreateCanaryTrackDeploymentMessage)
 		return err
 	}
 	// Wait for a canary track deployment to succeed
@@ -125,6 +124,9 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	}
 	// Create a stable track deployment
 	stableTrackDeployment, err := c.createTrackDeployment(cd, template, templateHash, dList, &cd.Spec.Tracks.Stable, kanarini.StableTrackName)
+	if err != nil {
+		return err
+	}
 	// Wait for a canary track deployment to succeed
 	if !IsDeploymentReady(stableTrackDeployment) {
 		glog.V(4).Info("Stable track deployment is not ready")
@@ -254,6 +256,8 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 				if err != nil {
 					return nil, err
 				}
+				msg := fmt.Sprintf("Updated Deployment %q", createdDeployment.Name)
+				c.eventRecorder.Event(cd, corev1.EventTypeNormal, UpdatedDeploymentReason, msg)
 			}
 			break
 		}
@@ -282,6 +286,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 	needsUpdate := false
 	if !alreadyExists && HasProgressDeadline(cd) {
 		msg := fmt.Sprintf("Created new Deployment %q", createdDeployment.Name)
+		c.eventRecorder.Event(cd, corev1.EventTypeNormal, CreatedDeploymentReason, msg)
 		condition := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentProgressing, corev1.ConditionTrue, NewDeploymentReason, msg)
 		SetCanaryDeploymentCondition(&cd.Status, *condition)
 		needsUpdate = true
