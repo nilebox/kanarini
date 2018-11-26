@@ -12,7 +12,8 @@ env:
   global:
   - DEP_VERSION=v0.5.0
   - BAZEL_VERSION=0.18.0
-  - KUBECTL_VERSION=v1.10.0
+  - KUBECTL_VERSION=v1.12.2
+  - KUBE_VERSION=v1.12.2
   # DOCKER_USERNAME and DOCKER_PASSWORD
   - secure: WPg9MOQRmlRaaas8nrGwaPgmI+JVe14WOjMY0VOelsGKK7bfeo4Ol6anndPsh28jWhW7IXm5vzwoMikikHFaVQFL0yE15eQkrnnSVKOfs1Q40gFO67et/Bj4SXMQXyfkt82o7BUXjQLW53RLCDm68hPm6eCORtZaqzoQKjJhBJR1LZt/SfOsVfbMYzfFKZ6ZQ6nXbrtxnm4+MCz3B97Zd93lEMJPAFjLcCfsGcTPJMYza2alYBdyOU8rNn4bMGpEzLLzRbI384rrAHgscjgizVn19F+72Zgy7/R/M6HPq+cmJEaUwgWkodref07CNXCboORDl1e7pw1ZlnnarytRJUWNlCWMPlvY/bTaH2OwKRZ+wn5dwxmQU15FGF7txdynA6/8QLJM20ba4ALkFymODBnGfQRI+Qy55qIXCMER29/OqC0XNbBZnPiQa+LpftrX8TINlaJlhoXpvTneE+sX+0K13/NFs0bVlIrG27mdsaeIEeFKV9WbxJrmkSF1IDbQbqDd2jJBxg7idTZDzAJU4aI7mqVydH569ati+RtMFIxSh6iHu3j0vZPo+mKL6tzAWoFlEh21Q4nMkzsRlIdNh9kjC3tVzn3iaucxxZIYDU43wtMcELjZY/q1gzfl73VXd3yrJFRzw5E/J4KOlQnqBOj2x5IMIiSOsRJTJUqiXVk=
   - secure: DoOpQMuWciooVu4R095mQ3jtqv2sK6fbDRMx6C6LfkOWeTei+qLse+CY0tU77GhRD0vmsa8b2b6O9w5Pieu0gK4RssyTF6Tjyh8pOonQzP5DIQqEqmLZHAr4VuDGF4ZRwODA7NogHltrklg7fFwTvvDcIl1ITUC89HlBphO12CDAe6S0nMT/+tIgxAzFKcdsYJs0/SiSDI/JvdS+pfM1U8SmjfemazV1kjAA342MFsKO6tubWTyCxlTFGEb6j6/z6heylrKCkJC+gTG+PQY5idrFZhM77NmH1lT1mAbNVdEjsIWFRJYJysElTw9/ezMaHvQ/0IkfTkkxCYaETYJrXk88Ce3qz0lpoJG3GW9Dxg/ShP//PdotduvX7V0fQthWO433tvMTPBBiG+2ptBUz5RWBs2sMBLlwYijyHgk2uNWeaHbc40JlmliK09jz1mqvglyWlISF74puMubiuY8SnoOqPznIgyp4VIDA1sWqgLqyKccYUQgc4TSoZA6on72izcVWHKEPcjdBktVzrZK8DtH/rMfyBrMS2qJ4f9YAD81693fIMg1D2b9y8nDafvavBb5r+DGoLvNqCxhBh9bixKX6ES+XmOZSazO41dO+Xyk85MYwNSCPc9pofeYFEd6r0e5v31OV2W8mU9ANpKokOrfAfXGdIV3+p2TaTyRijo8=
@@ -34,7 +35,9 @@ before_install:
 - |
   go get sigs.k8s.io/kind
   docker pull kindest/node:v1.12.2
-  kind create cluster --image="kindest/node:v1.12.2"
+  kind create cluster --image="kindest/node:${KUBE_VERSION}"
+  export KUBECONFIG="$(kind get kubeconfig-path)"
+  kubectl cluster-info
 install:
 - make setup
 script:
