@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/golang/glog"
 	kanarini "github.com/nilebox/kanarini/pkg/apis/kanarini/v1alpha1"
@@ -12,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 // rolloutCanary implements the logic for a canary deployment.
@@ -206,7 +206,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 			Name:            cd.Name + "-" + string(trackName),
 			Namespace:       cd.Namespace,
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(cd, kanarini.CanaryDeploymentGVK)},
-			Annotations: annotations,
+			Annotations:     annotations,
 			Labels:          labels,
 		},
 		Spec: apps.DeploymentSpec{

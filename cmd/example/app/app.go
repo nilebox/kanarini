@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -9,25 +10,21 @@ import (
 	"sync"
 
 	"github.com/go-chi/chi"
+	"github.com/golang/glog"
 	app_util "github.com/nilebox/kanarini/pkg/util/app"
-	"github.com/nilebox/kanarini/pkg/util/logz"
 	metric_util "github.com/nilebox/kanarini/pkg/util/metric"
 	"github.com/nilebox/kanarini/pkg/util/middleware"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
-	"encoding/json"
-	"github.com/golang/glog"
 )
 
 const (
-	defaultVersion     = "0.0"
+	defaultVersion       = "0.0"
 	defaultErrorRate     = 0.5
 	defaultServerAddr    = ":8080"
 	defaultAuxServerAddr = ":9090"
 )
 
 type App struct {
-	Logger             *zap.Logger
 	PrometheusRegistry metric_util.PrometheusRegistry
 	ErrorRate          float64
 	Version            string
@@ -46,9 +43,6 @@ type App struct {
 func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
 	a := App{}
 
-	logEncoding := flagset.String("log-encoding", "json", `Sets the logger's encoding. Valid values are "json" and "console".`)
-	loggingLevel := flagset.String("log-level", "info", `Sets the logger's output level.`)
-
 	flagset.StringVar(&a.ServerAddr, "addr", defaultServerAddr, "Port to listen on")
 	flagset.StringVar(&a.AuxServerAddr, "aux-addr", defaultAuxServerAddr, "Auxiliary port to listen on")
 	flagset.Float64Var(&a.ErrorRate, "error-rate", defaultErrorRate, "Error rate for HTTP requests")
@@ -60,8 +54,6 @@ func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
 		return nil, err
 	}
 
-	a.Logger = logz.LoggerStr(*loggingLevel, *logEncoding)
-
 	a.PrometheusRegistry = prometheus.NewPedanticRegistry()
 
 	return &a, nil
@@ -69,9 +61,6 @@ func NewFromFlags(flagset *flag.FlagSet, arguments []string) (*App, error) {
 
 func (a *App) Run(ctx context.Context) error {
 	glog.V(4).Info("Starting application...")
-
-	defer a.Logger.Sync() // nolint: errcheck
-	// unhandled error above, but we are terminating anyway
 
 	router := chi.NewRouter()
 	server := &http.Server{
@@ -86,7 +75,6 @@ func (a *App) Run(ctx context.Context) error {
 
 	// Auxiliary server
 	auxServer := app_util.AuxServer{
-		Logger:   a.Logger,
 		Addr:     a.AuxServerAddr,
 		Gatherer: a.PrometheusRegistry,
 		IsReady:  func() bool { return true },
@@ -101,7 +89,7 @@ func (a *App) Run(ctx context.Context) error {
 		defer wg.Done()
 		err := auxServer.Run(ctx)
 		if err != nil {
-			a.Logger.Sugar().Errorf("auxServer error %v", err)
+			glog.V(1).Infof("auxServer error %v", err)
 		}
 	}()
 
@@ -110,7 +98,7 @@ func (a *App) Run(ctx context.Context) error {
 		defer wg.Done()
 		err := server.ListenAndServe()
 		if err != nil {
-			a.Logger.Sugar().Errorf("server error %v", err)
+			glog.V(1).Infof("main server error %v", err)
 		}
 	}()
 
@@ -186,8 +174,8 @@ func (a *App) infoHandler(w http.ResponseWriter, r *http.Request) {
 
 	info := Info{
 		Version: a.Version,
-		Emoji: a.generateEmoji(emotion),
-		Color: a.getBackgroundColor(emotion),
+		Emoji:   a.generateEmoji(emotion),
+		Color:   a.getBackgroundColor(emotion),
 	}
 	bytes, err := json.Marshal(&info)
 	if err != nil {

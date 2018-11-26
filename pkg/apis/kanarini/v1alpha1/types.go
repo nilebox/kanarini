@@ -52,7 +52,7 @@ type CanaryDeploymentSpec struct {
 
 	// Template describes the pods that will be created.
 	Template corev1.PodTemplateSpec `json:"template"`
-	Tracks          CanaryDeploymentTracks `json:"tracks"`
+	Tracks   CanaryDeploymentTracks `json:"tracks"`
 
 	// Minimum number of seconds for which a newly created pod should be ready
 	// without any of its container crashing, for it to be considered available.
@@ -93,9 +93,9 @@ type CanaryDeploymentStatus struct {
 }
 
 type DeploymentReadyStatusCheckpoint struct {
-	TemplateHash string `json:"templateHash,omitempty"`
-	LatestReadyTimestamp metav1.Time `json:"latestReadyTimestamp,omitempty"`
-	MetricCheckResult MetricCheckResult `json:"metricCheckResult,omitempty"`
+	TemplateHash         string            `json:"templateHash,omitempty"`
+	LatestReadyTimestamp metav1.Time       `json:"latestReadyTimestamp,omitempty"`
+	MetricCheckResult    MetricCheckResult `json:"metricCheckResult,omitempty"`
 }
 
 type MetricCheckResult string
@@ -107,9 +107,9 @@ const (
 )
 
 type DeploymentSnapshot struct {
-	TemplateHash string `json:"templateHash,omitempty"`
-	Template string `json:"template,omitempty"`
-	Timestamp metav1.Time `json:"timestamp,omitempty"`
+	TemplateHash string      `json:"templateHash,omitempty"`
+	Template     string      `json:"template,omitempty"`
+	Timestamp    metav1.Time `json:"timestamp,omitempty"`
 }
 
 type CanaryDeploymentConditionType string

@@ -295,37 +295,6 @@
   revision = "c679ae2cc0cb27ec3293fea7e254e47386f05d69"
 
 [[projects]]
-  digest = "1:22f696cee54865fb8e9ff91df7b633f6b8f22037a8015253c6b6a71ca82219c7"
-  name = "go.uber.org/atomic"
-  packages = ["."]
-  pruneopts = "NT"
-  revision = "1ea20fb1cbb1cc08cbd0d913a96dead89aa18289"
-  version = "v1.3.2"
-
-[[projects]]
-  digest = "1:58ca93bdf81bac106ded02226b5395a0595d5346cdc4caa8d9c1f3a5f8f9976e"
-  name = "go.uber.org/multierr"
-  packages = ["."]
-  pruneopts = "NT"
-  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
-  version = "v1.1.0"
-
-[[projects]]
-  digest = "1:572fa4496563920f3e3107a2294cf2621d6cc4ffd03403fb6397b1bab9fa082a"
-  name = "go.uber.org/zap"
-  packages = [
-    ".",
-    "buffer",
-    "internal/bufferpool",
-    "internal/color",
-    "internal/exit",
-    "zapcore",
-  ]
-  pruneopts = "NT"
-  revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
-  version = "v1.9.1"
-
-[[projects]]
   digest = "1:b8a780002f2309acd91eae62d81f012d79842f224d29ad091e4da231b6114946"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -535,6 +504,7 @@
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "discovery/cached",
     "discovery/fake",
     "informers",
     "informers/admissionregistration",
@@ -647,6 +617,7 @@
     "plugin/pkg/client/auth/exec",
     "rest",
     "rest/watch",
+    "restmapper",
     "testing",
     "tools/auth",
     "tools/cache",
@@ -746,16 +717,6 @@
     "pkg/apis/custom_metrics/v1beta2",
     "pkg/apis/external_metrics",
     "pkg/apis/external_metrics/v1beta1",
-    "pkg/apis/metrics",
-    "pkg/apis/metrics/v1alpha1",
-    "pkg/apis/metrics/v1beta1",
-    "pkg/client/clientset/versioned",
-    "pkg/client/clientset/versioned/fake",
-    "pkg/client/clientset/versioned/scheme",
-    "pkg/client/clientset/versioned/typed/metrics/v1alpha1",
-    "pkg/client/clientset/versioned/typed/metrics/v1alpha1/fake",
-    "pkg/client/clientset/versioned/typed/metrics/v1beta1",
-    "pkg/client/clientset/versioned/typed/metrics/v1beta1/fake",
     "pkg/client/custom_metrics",
     "pkg/client/custom_metrics/fake",
     "pkg/client/custom_metrics/scheme",
@@ -777,10 +738,7 @@
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/stretchr/testify/assert",
-    "go.uber.org/zap",
-    "go.uber.org/zap/zapcore",
     "k8s.io/api/apps/v1",
-    "k8s.io/api/autoscaling/v2beta2",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/meta/testrestmapper",
@@ -796,16 +754,16 @@
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
+    "k8s.io/client-go/discovery/cached",
     "k8s.io/client-go/discovery/fake",
     "k8s.io/client-go/informers",
     "k8s.io/client-go/informers/apps/v1",
-    "k8s.io/client-go/informers/core/v1",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/listers/apps/v1",
-    "k8s.io/client-go/listers/core/v1",
     "k8s.io/client-go/rest",
+    "k8s.io/client-go/restmapper",
     "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
@@ -825,9 +783,6 @@
     "k8s.io/gengo/args",
     "k8s.io/metrics/pkg/apis/custom_metrics/v1beta2",
     "k8s.io/metrics/pkg/apis/external_metrics/v1beta1",
-    "k8s.io/metrics/pkg/apis/metrics/v1beta1",
-    "k8s.io/metrics/pkg/client/clientset/versioned/fake",
-    "k8s.io/metrics/pkg/client/clientset/versioned/typed/metrics/v1beta1",
     "k8s.io/metrics/pkg/client/custom_metrics",
     "k8s.io/metrics/pkg/client/custom_metrics/fake",
     "k8s.io/metrics/pkg/client/external_metrics",

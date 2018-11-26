@@ -216,7 +216,7 @@ func (c *CanaryDeploymentController) deleteDeployment(obj interface{}) {
 	c.processDeploymentEvent(d)
 }
 
-func (c *CanaryDeploymentController)  processDeploymentEvent(d *apps.Deployment) {
+func (c *CanaryDeploymentController) processDeploymentEvent(d *apps.Deployment) {
 	ownerRef := metav1.GetControllerOf(d)
 	if ownerRef == nil {
 		return

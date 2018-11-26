@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.uber.org/zap"
 )
 
 const (
@@ -23,7 +22,6 @@ const (
 )
 
 type AuxServer struct {
-	Logger *zap.Logger
 	// Name is the name of the application.
 	Name     string
 	Addr     string

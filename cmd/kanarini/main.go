@@ -8,6 +8,7 @@ import (
 
 	"github.com/nilebox/kanarini/cmd/kanarini/app"
 	app_util "github.com/nilebox/kanarini/pkg/util/app"
+	"github.com/golang/glog"
 )
 
 func main() {
@@ -30,8 +31,8 @@ func runWithContext(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	a.Logger.Info("Application starting")
+	glog.V(3).Info("Application starting")
 	err = a.Run(ctx)
-	a.Logger.Info("Application quit")
+	glog.V(3).Info("Application quit")
 	return err
 }

@@ -13,12 +13,10 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/util/app:go_default_library",
-        "//pkg/util/logz:go_default_library",
         "//pkg/util/metric:go_default_library",
         "//pkg/util/middleware:go_default_library",
         "//vendor/github.com/go-chi/chi:go_default_library",
         "//vendor/github.com/golang/glog:go_default_library",
         "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
-        "//vendor/go.uber.org/zap:go_default_library",
     ],
 )
