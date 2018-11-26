@@ -1,0 +1,132 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: v1
+  namespace: kanarini-manual
+  labels:
+    app: manual
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      app: manual
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: manual
+        version: v1
+    spec:
+      containers:
+      - name: manual
+        image: nilebox/kanarini-example:1.0
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: v2
+  namespace: kanarini-manual
+  labels:
+    app: manual
+    version: v2
+spec:
+  selector:
+    matchLabels:
+      app: manual
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: manual
+        version: v2
+    spec:
+      containers:
+      - name: manual
+        image: nilebox/kanarini-example:2.0
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: v3
+  namespace: kanarini-manual
+  labels:
+    app: manual
+    version: v3
+spec:
+  selector:
+    matchLabels:
+      app: manual
+      version: v3
+  template:
+    metadata:
+      labels:
+        app: manual
+        version: v3
+    spec:
+      containers:
+      - name: manual
+        image: nilebox/kanarini-example:3.0
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
