@@ -10,7 +10,6 @@ import (
 	kanariniinformers "github.com/nilebox/kanarini/pkg/client/informers_generated/externalversions"
 	"github.com/nilebox/kanarini/pkg/controller"
 	"github.com/nilebox/kanarini/pkg/metrics"
-	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/informers"
@@ -22,14 +21,11 @@ import (
 )
 
 type App struct {
-	Logger *zap.Logger
-
 	MainClient kubernetes.Interface
 
 	GenericControllerOptions
 	LeaderElectionOptions
 	RestClientOptions
-	LoggerOptions
 
 	RestConfig   *rest.Config
 	ResyncPeriod time.Duration
@@ -41,7 +37,6 @@ func NewFromFlags(name string, flagset *flag.FlagSet, arguments []string) (*App,
 	BindGenericControllerFlags(&a.GenericControllerOptions, flagset)
 	BindLeaderElectionFlags(name, &a.LeaderElectionOptions, flagset)
 	BindRestClientFlags(&a.RestClientOptions, flagset)
-	BindLoggerFlags(&a.LoggerOptions, flagset)
 
 	err := flagset.Parse(arguments)
 	if err != nil {
@@ -53,8 +48,6 @@ func NewFromFlags(name string, flagset *flag.FlagSet, arguments []string) (*App,
 		return nil, err
 	}
 
-	a.Logger = LoggerFromOptions(a.LoggerOptions)
-
 	// Clients
 	a.MainClient, err = kubernetes.NewForConfig(a.RestConfig)
 	if err != nil {
@@ -65,9 +58,6 @@ func NewFromFlags(name string, flagset *flag.FlagSet, arguments []string) (*App,
 }
 
 func (a *App) Run(ctx context.Context) error {
-	defer a.Logger.Sync() // nolint: errcheck
-	// unhandled error above, but we are terminating anyway
-
 	// Build the informer factory for core resources
 	coreInformerFactory := informers.NewSharedInformerFactory(
 		a.MainClient,

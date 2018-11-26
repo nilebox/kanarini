@@ -6,8 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/nilebox/kanarini/pkg/util/logz"
-	"go.uber.org/zap"
+	"github.com/golang/glog"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	core_v1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
@@ -34,7 +33,7 @@ type LeaderElectionOptions struct {
 
 // DoLeaderElection starts leader election and blocks until it acquires the lease.
 // Returned context is cancelled once the lease is lost or ctx signals done.
-func DoLeaderElection(ctx context.Context, logger *zap.Logger, component string, config LeaderElectionOptions, configMapsGetter core_v1client.ConfigMapsGetter, recorder record.EventRecorder) (context.Context, error) {
+func DoLeaderElection(ctx context.Context, component string, config LeaderElectionOptions, configMapsGetter core_v1client.ConfigMapsGetter, recorder record.EventRecorder) (context.Context, error) {
 	id, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -58,11 +57,11 @@ func DoLeaderElection(ctx context.Context, logger *zap.Logger, component string,
 		RetryPeriod:   config.RetryPeriod,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				logger.Info("Started leading")
+				glog.V(3).Info("Started leading")
 				close(startedLeading)
 			},
 			OnStoppedLeading: func() {
-				logger.Info("Leader status lost")
+				glog.V(3).Info("Leader status lost")
 				cancel()
 			},
 		},
@@ -72,8 +71,6 @@ func DoLeaderElection(ctx context.Context, logger *zap.Logger, component string,
 		return nil, err
 	}
 	go func() {
-		// note: because le.Run() also adds a logging panic handler panics with be logged 3 times
-		defer logz.LogStructuredPanic()
 		le.Run(ctx)
 	}()
 	select {

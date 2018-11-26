@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	CreatedDeploymentReason = "CreatedDeployment"
-	UpdatedDeploymentReason = "UpdatedDeployment"
-	DelayMetricsCheckReason                   = "DelayMetricsCheck"
-	MetricsCheckResultReason                  = "MetricsCheckResult"
-	MetricsCheckUnsuccessfulReason            = "MetricsCheckUnsuccessful"
-	DoneProcessingReason            = "DoneProcessing"
+	CreatedDeploymentReason        = "CreatedDeployment"
+	UpdatedDeploymentReason        = "UpdatedDeployment"
+	DelayMetricsCheckReason        = "DelayMetricsCheck"
+	MetricsCheckResultReason       = "MetricsCheckResult"
+	MetricsCheckUnsuccessfulReason = "MetricsCheckUnsuccessful"
+	DoneProcessingReason           = "DoneProcessing"
 
 	DoneProcessingMessage = "Finished reconciling update"
 )
