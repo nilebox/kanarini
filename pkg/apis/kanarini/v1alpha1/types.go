@@ -116,13 +116,9 @@ type CanaryDeploymentConditionType string
 
 // These are valid conditions of a deployment.
 const (
-	// Available means the deployment is available, ie. at least the minimum available
-	// replicas required are up and running for at least minReadySeconds.
-	CanaryDeploymentAvailable CanaryDeploymentConditionType = "Available"
-	// Progressing means the deployment is progressing. Progress for a deployment is
-	// considered when a new replica set is created or adopted, and when new pods scale
-	// up or old pods scale down. Progress is not estimated for paused deployments or
-	// when progressDeadlineSeconds is not specified.
+	// Ready means the deployment has successfully finished its reconciliation.
+	CanaryDeploymentReady CanaryDeploymentConditionType = "Ready"
+	// Progressing means the deployment is progressing.
 	CanaryDeploymentProgressing CanaryDeploymentConditionType = "Progressing"
 	// Failure is added in a deployment when one of its pods fails to be created
 	// or deleted.
@@ -160,9 +156,6 @@ type CanaryTrackDeploymentSpec struct {
 	// the service is healthy.
 	// +optional
 	Metrics []MetricSpec `json:"metrics,omitempty"`
-
-	// Action to perform in case of unsuccessful metric check
-	FailureHandlingStrategy MetricFailureHandlingStrategy `json:"failureHandlingStrategy,omitempty"`
 }
 
 type TrackDeploymentSpec struct {
@@ -174,15 +167,6 @@ type TrackDeploymentSpec struct {
 	// Labels to add to pods to distinguish between tracks
 	Labels map[string]string `json:"labels,omitempty"`
 }
-
-type MetricFailureHandlingStrategy string
-
-const (
-	// Stop change propagation to stable track
-	MetricFailureHandlingStrategyStopPropagation MetricFailureHandlingStrategy = "StopPropagation"
-	// Rollback canary track deployment to the previous state
-	MetricFailureHandlingStrategyRollback MetricFailureHandlingStrategy = "Rollback"
-)
 
 // MetricSpec specifies how to scale based on a single metric
 // (only `type` and one other matching field should be set at once).

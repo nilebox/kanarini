@@ -23,8 +23,13 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Last seen template
 	template := &cd.Spec.Template
 	templateHash := controller.ComputeHash(template, nil)
-	cd.Status.ObservedGeneration = cd.Generation
-	cd.Status.ObservedTemplateHash = templateHash
+	if cd.Status.ObservedGeneration != cd.Generation {
+		cd.Status.ObservedGeneration = cd.Generation
+		cd.Status.ObservedTemplateHash = templateHash
+		cd.Status.Conditions = []kanarini.CanaryDeploymentCondition{}
+		_, err := c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+		return err
+	}
 
 	// Check if we need to rollback
 	rollbackTemplate, err := getRollbackTemplate(cd, templateHash)
@@ -136,7 +141,33 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 	// Done
 	glog.V(4).Infof("Finished reconciling canary deployment %s/%s", cd.Namespace, cd.Name)
 	c.eventRecorder.Event(cd, corev1.EventTypeNormal, DoneProcessingReason, DoneProcessingMessage)
+	err = c.setFinalCondition(cd)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (c *CanaryDeploymentController) setFinalCondition(cd *kanarini.CanaryDeployment) error {
+	templateHash := cd.Status.ObservedTemplateHash
+	if cd.Status.LatestSuccessfulDeploymentSnapshot != nil && cd.Status.LatestSuccessfulDeploymentSnapshot.TemplateHash == templateHash {
+		// Success
+		message := "Successfully reconciled spec"
+		progressingCondition := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentProgressing, corev1.ConditionFalse, DoneProcessingReason, message)
+		SetCanaryDeploymentCondition(&cd.Status, *progressingCondition)
+		readyCondition := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentReady, corev1.ConditionTrue, DoneReadyReason, message)
+		SetCanaryDeploymentCondition(&cd.Status, *readyCondition)
+	} else {
+		// Failure
+		message := "Finished rolling back to the latest stable spec"
+		progressingCondition := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentProgressing, corev1.ConditionFalse, DoneProcessingReason, message)
+		SetCanaryDeploymentCondition(&cd.Status, *progressingCondition)
+		readyCondition := NewCanaryDeploymentCondition(kanarini.CanaryDeploymentFailure, corev1.ConditionTrue, DoneFailureReason, message)
+		SetCanaryDeploymentCondition(&cd.Status, *readyCondition)
+	}
+	_, err := c.kanariniClient.CanaryDeployments(cd.Namespace).UpdateStatus(cd)
+	return err
 }
 
 func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDeployment, trackSpec *kanarini.CanaryTrackDeploymentSpec) (kanarini.MetricCheckResult, error) {
