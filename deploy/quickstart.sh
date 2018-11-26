@@ -96,6 +96,12 @@ echo "Installing kanarini example app into cluster"
 kubectl apply -f ./kanarini-demo
 
 echo "-----------------------------------------------------------------------"
+
+# Install manual example app
+echo "Installing manual example app into cluster"
+kubectl apply -f ./kanarini-manual
+
+echo "-----------------------------------------------------------------------"
 # Test that Ingress with load balancing works
 echo "Kubernetes cluster is ready. To switch kubectl context, run:"
 echo "  export KUBECONFIG=\"$(kind get kubeconfig-path)\""

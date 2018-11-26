@@ -20,3 +20,8 @@ metadata:
   name: kanarini-demo
   labels:
       monitored: "true"
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kanarini-manual
