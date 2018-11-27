@@ -102,7 +102,7 @@ As a result, you will have two `Deployment` objects created and managed by Kanar
 
 ## Quickstart
 
-The easiest way to try Kanarini is to run a "Quickstart" script that bootstraps
+To see Kanarini in action, run a "Quickstart" script that bootstraps
 a local Kubernetes cluster (https://github.com/kubernetes-sigs/kind), installs
 additional components (Kanarini controller, 
 [Heptio Contour](https://github.com/heptio/contour), [Prometheus Operator](https://github.com/coreos/prometheus-operator),
@@ -135,11 +135,11 @@ Note that in that case you won't get weighted load balancing, as you will be sen
 requests directly to services without ingress.
 
 To test happy path scenario, change Docker image in 
-[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/deploy/kanarini-demo/canarydeployments.yaml)
+[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/demo/kanarini-demo/canarydeployments.yaml)
 to `nilebox/kanarini-example:3.0`. The change will be first applied to a "canary"
 `Deployment`, and after a successful metric check it will be propagated to "stable" `Deployment`.
 
 To test non-happy path, change Docker image in 
-[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/deploy/kanarini-demo/canarydeployments.yaml)
+[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/demo/kanarini-demo/canarydeployments.yaml)
 to `nilebox/kanarini-example:2.0`. The change will be initially applied to a "canary"
 `Deployment`, but after failing metric check it will be rolled back.
