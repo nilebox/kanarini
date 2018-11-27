@@ -10,8 +10,48 @@ Kanarini introduces a new Kubernetes resource, `CanaryDeployment`, that reflects
 the structure of standard Deployment with extra configuration for canary/stable
 deployment tracks.
 
-## Example
+## Prerequisites
 
+### Custom Metrics API
+
+Kanarini is using [Custom Metrics API](https://github.com/kubernetes/metrics#custom-metrics-api) to fetch metrics, and one of its implementations
+is required to be installed in the cluster.
+For example, if you are using Prometheus for metrics collection, you can install
+[Prometheus Adapter](https://github.com/DirectXMan12/k8s-prometheus-adapter).
+
+## Getting started
+
+The easiest way to see Kanarini in action is to follow the [Quickstart](#quickstart) guide.
+
+### Add Kanarini to your cluster
+
+Run:
+```bash
+kubectl apply -f ./deploy/crd-canarydeployment.yaml
+kubectl apply -f ./deploy/namespace.yaml
+kubectl apply -f ./deploy/serviceaccount.yaml
+kubectl apply -f ./deploy/rbac.yaml
+kubectl apply -f ./deploy/deployment.yaml
+```
+
+This command:
+- Registers a `CanaryDeployment` CustomResourceDefinition
+- Creates a new namespace `kanarini` with one instance of Kanarini in the namespace
+- Grants Kanarini permissions to manage Deployment objects in the cluster
+
+### Usage example
+
+To create an instance of `CanaryDeployment`, run:
+```bash
+kubectl apply -f ./deploy/example.yaml
+```
+
+This command will create a `CanaryDeployment` in the `kanarini-example` namespace:
+```bash
+$ kubectl get canarydeployments -n kanarini-example
+NAME    AGE
+emoji   22s
+```
 ```yaml
 apiVersion: kanarini.nilebox.github.com/v1alpha1
 kind: CanaryDeployment
@@ -35,22 +75,6 @@ spec:
           name: http
         - containerPort: 9090
           name: metrics
-        readinessProbe:
-          tcpSocket:
-            port: 8080
-          failureThreshold: 1
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 2
-        livenessProbe:
-          tcpSocket:
-            port: 8080
-          failureThreshold: 3
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 2
   tracks:
     canary:
       replicas: 1
@@ -74,9 +98,11 @@ spec:
         track: stable
 ```
 
-## Getting started
+As a result, you will have two `Deployment` objects created and managed by Kanarini.
 
-The easiest way to try Kanarini is to run a "Quickstart" script that bootstraps
+## Quickstart
+
+To see Kanarini in action, run a "Quickstart" script that bootstraps
 a local Kubernetes cluster (https://github.com/kubernetes-sigs/kind), installs
 additional components (Kanarini controller, 
 [Heptio Contour](https://github.com/heptio/contour), [Prometheus Operator](https://github.com/coreos/prometheus-operator),
@@ -85,7 +111,7 @@ and deploys a demo application with `CanaryDeployment` resource, services and in
 
 First, run
 ```bash
-./deploy/quickstart.sh
+./demo/quickstart.sh
 ```
 
 Once the script has successfully finished its execution, setup `kubectl` context:
@@ -109,11 +135,11 @@ Note that in that case you won't get weighted load balancing, as you will be sen
 requests directly to services without ingress.
 
 To test happy path scenario, change Docker image in 
-[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/deploy/kanarini-demo/canarydeployments.yaml)
+[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/demo/kanarini-demo/canarydeployments.yaml)
 to `nilebox/kanarini-example:3.0`. The change will be first applied to a "canary"
 `Deployment`, and after a successful metric check it will be propagated to "stable" `Deployment`.
 
 To test non-happy path, change Docker image in 
-[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/deploy/kanarini-demo/canarydeployments.yaml)
+[canarydeployments.yaml](https://github.com/nilebox/kanarini/blob/master/demo/kanarini-demo/canarydeployments.yaml)
 to `nilebox/kanarini-example:2.0`. The change will be initially applied to a "canary"
 `Deployment`, but after failing metric check it will be rolled back.
