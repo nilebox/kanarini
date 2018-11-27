@@ -1,0 +1,25 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: kanarini
+  namespace: kanarini
+  labels:
+    app: kanarini
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kanarini
+  template:
+    metadata:
+      labels:
+        app: kanarini
+    spec:
+      serviceAccountName: kanarini
+      containers:
+      - name: kanarini
+        image: nilebox/kanarini:0.0.1-c6e33ea
+        args:
+        - --v=4
+        - --alsologtostderr
