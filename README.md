@@ -48,7 +48,7 @@ kubectl apply -f ./deploy/example.yaml
 
 This command will create a `CanaryDeployment` in the `kanarini-example` namespace:
 ```bash
-$ kubectl get canarydeployments -n kanarini-example emoji
+$ kubectl get canarydeployments -n kanarini-example
 NAME    AGE
 emoji   22s
 ```
