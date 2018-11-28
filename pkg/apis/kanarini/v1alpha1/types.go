@@ -90,6 +90,10 @@ type CanaryDeploymentStatus struct {
 
 	// Keeps a copy of the latest failed deployment to be used for Rollback strategy
 	LatestFailedDeploymentSnapshot *DeploymentSnapshot `json:"latestFailedDeploymentSnapshot,omitempty"`
+
+	// latestMetrics is the last read state of the metrics used by this canary deployment.
+	// +optional
+	LatestMetrics []MetricStatus `json:"latestMetrics"`
 }
 
 type DeploymentReadyStatusCheckpoint struct {
@@ -270,3 +274,58 @@ const (
 	CanaryTrackName CanaryDeploymentTrackName = "canary"
 	StableTrackName CanaryDeploymentTrackName = "stable"
 )
+
+// MetricStatus describes the last-read state of a single metric.
+type MetricStatus struct {
+	// type is the type of metric source.  It will be one of "Object",
+	// "Pods" or "Resource", each corresponds to a matching field in the object.
+	Type MetricSourceType `json:"type" protobuf:"bytes,1,name=type"`
+
+	// object refers to a metric describing a single kubernetes object
+	// (for example, hits-per-second on an Ingress object).
+	// +optional
+	Object *ObjectMetricStatus `json:"object,omitempty" protobuf:"bytes,2,opt,name=object"`
+	// external refers to a global metric that is not associated
+	// with any Kubernetes object. It allows autoscaling based on information
+	// coming from components running outside of cluster
+	// (for example length of queue in cloud messaging service, or
+	// QPS from loadbalancer running outside of cluster).
+	// +optional
+	External *ExternalMetricStatus `json:"external,omitempty" protobuf:"bytes,5,opt,name=external"`
+}
+
+// ObjectMetricStatus indicates the current value of a metric describing a
+// kubernetes object (for example, hits-per-second on an Ingress object).
+type ObjectMetricStatus struct {
+	// metric identifies the target metric by name and selector
+	Metric MetricIdentifier `json:"metric" protobuf:"bytes,1,name=metric"`
+	// current contains the current value for the given metric
+	Current MetricValueStatus `json:"current" protobuf:"bytes,2,name=current"`
+
+	DescribedObject CrossVersionObjectReference `json:"describedObject" protobuf:"bytes,3,name=describedObject"`
+}
+
+// ExternalMetricStatus indicates the current value of a global metric
+// not associated with any Kubernetes object.
+type ExternalMetricStatus struct {
+	// metric identifies the target metric by name and selector
+	Metric MetricIdentifier `json:"metric" protobuf:"bytes,1,name=metric"`
+	// current contains the current value for the given metric
+	Current MetricValueStatus `json:"current" protobuf:"bytes,2,name=current"`
+}
+
+// MetricValueStatus holds the current value for a metric
+type MetricValueStatus struct {
+	// value is the current value of the metric (as a quantity).
+	// +optional
+	Value *resource.Quantity `json:"value,omitempty" protobuf:"bytes,1,opt,name=value"`
+	// averageValue is the current value of the average of the
+	// metric across all relevant pods (as a quantity)
+	// +optional
+	AverageValue *resource.Quantity `json:"averageValue,omitempty" protobuf:"bytes,2,opt,name=averageValue"`
+	// currentAverageUtilization is the current value of the average of the
+	// resource metric across all relevant pods, represented as a percentage of
+	// the requested value of the resource for the pods.
+	// +optional
+	AverageUtilization *int32 `json:"averageUtilization,omitempty" protobuf:"bytes,3,opt,name=averageUtilization"`
+}

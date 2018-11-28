@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // rolloutCanary implements the logic for a canary deployment.
@@ -87,7 +88,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 				return nil
 			}
 			// Check the metric value and decide whether Service is healthy
-			result, err := c.checkDeploymentMetric(cd, &cd.Spec.Tracks.Canary)
+			result, statuses, err := c.checkDeploymentMetric(cd, &cd.Spec.Tracks.Canary)
 			if err != nil {
 				return err
 			}
@@ -100,6 +101,7 @@ func (c *CanaryDeploymentController) rolloutCanary(cd *kanarini.CanaryDeployment
 				glog.V(4).Info("Failed to marshal template")
 				return err
 			}
+			cd.Status.LatestMetrics = statuses
 			if result == kanarini.MetricCheckResultSuccess {
 				cd.Status.LatestSuccessfulDeploymentSnapshot = &kanarini.DeploymentSnapshot{
 					TemplateHash: templateHash,
@@ -170,51 +172,86 @@ func (c *CanaryDeploymentController) setFinalCondition(cd *kanarini.CanaryDeploy
 	return err
 }
 
-func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDeployment, trackSpec *kanarini.CanaryTrackDeploymentSpec) (kanarini.MetricCheckResult, error) {
-	for _, metricSpec := range trackSpec.Metrics {
+func (c *CanaryDeploymentController) checkDeploymentMetric(cd *kanarini.CanaryDeployment, trackSpec *kanarini.CanaryTrackDeploymentSpec) (kanarini.MetricCheckResult, []kanarini.MetricStatus, error) {
+	metricSpecs := trackSpec.Metrics
+
+	result := kanarini.MetricCheckResultSuccess
+	statuses := make([]kanarini.MetricStatus, len(metricSpecs))
+
+	for i, metricSpec := range metricSpecs {
 		switch metricSpec.Type {
 		case kanarini.ObjectMetricSourceType:
 			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.Object.Metric.Selector)
 			if err != nil {
-				return "", err
+				c.eventRecorder.Event(cd, corev1.EventTypeWarning, "FailedGetObjectMetric", err.Error())
+				//setCondition(hpa, autoscalingv2.ScalingActive, v1.ConditionFalse, "FailedGetObjectMetric", "the CD was unable to fetch object metric: %v", err)
+				return "", nil, fmt.Errorf("failed to get object metric value: %v", err)
 			}
 			val, _, err := c.metricsClient.GetObjectMetric(metricSpec.Object.Metric.Name, cd.Namespace, &metricSpec.Object.DescribedObject, metricSelector)
 			if err != nil {
-				return "", err
+				return "", nil, fmt.Errorf("failed to get object metric value: %v", err)
 			}
 			glog.V(4).Infof("Custom metric value: %v", val)
 			glog.V(4).Infof("Custom metric target value: %v", metricSpec.Object.Target.Value.MilliValue())
 			// Sometimes we get value "-9223372036854775808m" in Response from Prometheus Adapter (NaN?)
 			if val < 0 {
-				return kanarini.MetricCheckResultUnknown, errors.New("Negative metric values are not supported, the check will be retried")
+				return kanarini.MetricCheckResultUnknown, nil, errors.New("Negative metric values are not supported, the check will be retried")
+			}
+			statuses[i] = kanarini.MetricStatus{
+				Type: kanarini.ObjectMetricSourceType,
+				Object: &kanarini.ObjectMetricStatus{
+					DescribedObject: metricSpec.Object.DescribedObject,
+					Metric: kanarini.MetricIdentifier{
+						Name:     metricSpec.Object.Metric.Name,
+						Selector: metricSpec.Object.Metric.Selector,
+					},
+					Current: kanarini.MetricValueStatus{
+						Value: resource.NewMilliQuantity(val, resource.DecimalSI),
+					},
+				},
 			}
 			// If metric value is equal or greater than target value, it's considered unhealthy
 			if val >= metricSpec.Object.Target.Value.MilliValue() {
-				return kanarini.MetricCheckResultFailure, nil
+				result = kanarini.MetricCheckResultFailure
 			}
 		case kanarini.ExternalMetricSourceType:
 			metricSelector, err := metav1.LabelSelectorAsSelector(metricSpec.External.Metric.Selector)
 			if err != nil {
-				return "", err
+				return "", nil, err
 			}
 			metrics, _, err := c.metricsClient.GetExternalMetric(metricSpec.Object.Metric.Name, cd.Namespace, metricSelector)
 			if err != nil {
-				return "", err
+				return "", nil, err
 			}
 			var sum int64 = 0
 			for _, val := range metrics {
 				sum = sum + val
 			}
+			statuses[i] = kanarini.MetricStatus{
+				Type: kanarini.ExternalMetricSourceType,
+				External: &kanarini.ExternalMetricStatus{
+					Metric: kanarini.MetricIdentifier{
+						Name:     metricSpec.External.Metric.Name,
+						Selector: metricSpec.External.Metric.Selector,
+					},
+					Current: kanarini.MetricValueStatus{
+						Value: resource.NewMilliQuantity(sum, resource.DecimalSI),
+					},
+				},
+			}
 			// If metric value is equal or greater than target value, it's considered unhealthy
 			if sum >= metricSpec.External.Target.Value.MilliValue() {
-				return kanarini.MetricCheckResultFailure, nil
+				result = kanarini.MetricCheckResultFailure
 			}
 		default:
-			return "", errors.New(fmt.Sprintf("Unexpected metric source type: %v", metricSpec.Type))
+			errMsg := fmt.Sprintf("unknown metric source type %q", string(metricSpec.Type))
+			c.eventRecorder.Event(cd, corev1.EventTypeWarning, "InvalidMetricSourceType", errMsg)
+			// setCondition(hpa, autoscalingv2.ScalingActive, v1.ConditionFalse, "InvalidMetricSourceType", "the HPA was unable to compute the replica count: %s", errMsg)
+			return "", nil, fmt.Errorf(errMsg)
 		}
 	}
 
-	return kanarini.MetricCheckResultSuccess, nil
+	return result, statuses, nil
 }
 
 func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDeployment, template *corev1.PodTemplateSpec, templateHash string, dList []*apps.Deployment, trackSpec *kanarini.TrackDeploymentSpec, trackName kanarini.CanaryDeploymentTrackName) (*apps.Deployment, error) {
