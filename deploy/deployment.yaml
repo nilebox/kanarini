@@ -19,7 +19,7 @@ spec:
       serviceAccountName: kanarini
       containers:
       - name: kanarini
-        image: nilebox/kanarini:0.0.1-c6e33ea
+        image: nilebox/kanarini:0.0.1-b0d2e4c
         args:
         - --v=4
         - --alsologtostderr
