@@ -268,6 +268,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 	for k, v := range trackSpec.Labels {
 		labels[k] = v
 	}
+	var zero int32 = 0
 	newDeployment := apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			// Make the name deterministic, to ensure idempotence
@@ -283,6 +284,7 @@ func (c *CanaryDeploymentController) createTrackDeployment(cd *kanarini.CanaryDe
 			Selector:                cd.Spec.Selector,
 			MinReadySeconds:         cd.Spec.MinReadySeconds,
 			ProgressDeadlineSeconds: cd.Spec.ProgressDeadlineSeconds,
+			RevisionHistoryLimit: &zero, // We don't need to use the rollback feature
 		},
 	}
 	// TODO this means we ignore selector from CD spec, we should extend the selector separately instead
