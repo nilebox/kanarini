@@ -912,6 +912,21 @@ data:
             "align": false,
             "alignLevel": null
           }
+        },
+        {
+          "content": "<style>\n.panel-title-text {\n    font-size: x-large;\n}\n.panel-menu-toggle {\n    font-size: x-large;\n}\n.panel-content {\n    height: calc(100% - 44px);\n}\ndiv.flot-tick-label {\n    font-size: x-large;\n}\n.graph-legend-series {\n    font-size: 22px;\n}\n.graph-legend-icon {\n    top: 2px;\n}\n.graph-legend-icon .fa {\n    font-size: 175%;\n    top: 4px;\n}\n.axisLabel {\n    font-size: 24px;\n}\n.panel-content {\n    padding: 10px 10px;\n}\n.left-yaxis-label {\n    left: 4px;\n}\n.right-yaxis-label {\n    right: 4px;\n}\ndiv.flot-x-axis > div.flot-tick-label {\n    font-size: large;\n}\n</style>",
+          "gridPos": {
+            "h": 2,
+            "w": 4,
+            "x": 0,
+            "y": 44
+          },
+          "id": 13,
+          "links": [],
+          "mode": "html",
+          "title": "Style",
+          "transparent": true,
+          "type": "text"
         }
       ],
       "refresh": "5s",

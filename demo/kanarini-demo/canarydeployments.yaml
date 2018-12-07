@@ -42,7 +42,7 @@ spec:
       replicas: 1
       labels:
         track: canary
-      metricsCheckDelaySeconds: 90
+      metricsCheckDelaySeconds: 60
       metrics:
       - type: Object
         object:
