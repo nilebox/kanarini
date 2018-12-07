@@ -58,7 +58,15 @@ data:
     {
       "annotations": {
         "list": [
-
+          {
+            "builtIn": 1,
+            "datasource": "-- Grafana --",
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
         ]
       },
       "editable": true,
@@ -914,7 +922,7 @@ data:
           }
         },
         {
-          "content": "<style>\n.panel-title-text {\n    font-size: x-large;\n}\n.panel-menu-toggle {\n    font-size: x-large;\n}\n.panel-content {\n    height: calc(100% - 44px);\n}\ndiv.flot-tick-label {\n    font-size: x-large;\n}\n.graph-legend-series {\n    font-size: 22px;\n}\n.graph-legend-icon {\n    top: 2px;\n}\n.graph-legend-icon .fa {\n    font-size: 175%;\n    top: 4px;\n}\n.axisLabel {\n    font-size: 24px;\n}\n.panel-content {\n    padding: 10px 10px;\n}\n.left-yaxis-label {\n    left: 4px;\n}\n.right-yaxis-label {\n    right: 4px;\n}\ndiv.flot-x-axis > div.flot-tick-label {\n    font-size: large;\n}\n</style>",
+          "content": "<style>\n.panel-title-text {\n    font-size: x-large;\n}\n.panel-menu-toggle {\n    font-size: x-large;\n}\n.panel-content {\n    height: calc(100% - 44px);\n}\ndiv.flot-tick-label {\n    font-size: x-large;\n}\n.graph-legend-series {\n    font-size: 22px;\n}\n.graph-legend-icon {\n    top: 2px;\n}\n.graph-legend-icon .fa {\n    font-size: 175%;\n    top: 4px;\n}\n.axisLabel {\n    font-size: 24px;\n}\n.grafana-tooltip {\n    font-size: 24px;\n}\n.panel-content {\n    padding: 10px 10px;\n}\n.left-yaxis-label {\n    left: 4px;\n}\n.right-yaxis-label {\n    right: 4px;\n}\ndiv.flot-x-axis > div.flot-tick-label {\n    font-size: large;\n}\n</style>",
           "gridPos": {
             "h": 2,
             "w": 4,
